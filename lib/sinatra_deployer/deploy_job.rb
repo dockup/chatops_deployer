@@ -50,7 +50,7 @@ module SinatraDeployer
       Dir.chdir(NGINX_SITES_ENABLED_DIR) do
         return false if File.exists?(@deployment_alias)
 
-        contents <<-EOM
+        contents = <<-EOM
           server{
               listen 80;
               server_name #{@deployment_alias}.#{DEPLOYER_HOST};
