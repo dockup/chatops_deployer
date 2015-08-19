@@ -1,28 +1,21 @@
-# FlynnDeployer
+# ChatopsDeployer
 
-Welcome to your new gem! In this directory, you'll find the files you need to be able to package up your Ruby library into a gem. Put your Ruby code in the file `lib/flynn_deployer`. To experiment with that code, run `bin/console` for an interactive prompt.
-
-TODO: Delete this and the text above, and describe your gem
+A lightweight Sinatra app that deploys staging apps of git branches
+in docker containers. Meant to be used with hubot.
 
 ## Installation
 
-Add this line to your application's Gemfile:
-
-```ruby
-gem 'flynn_deployer'
-```
-
-And then execute:
-
-    $ bundle
-
-Or install it yourself as:
-
-    $ gem install flynn_deployer
+    $ gem install chatops_deployer
 
 ## Usage
 
-TODO: Write usage instructions here
+Set the following ENV vars:
+
+```bash
+export DEPLOYER_HOST=<hostname where nginx listens>
+export WORKSPACE=<path where you want your projects to be git-cloned>
+export NGINX_SITES_ENABLED_DIR=<path to sites-enabled directory in nginx conf>
+```
 
 ## Development
 
@@ -32,7 +25,7 @@ To install this gem onto your local machine, run `bundle exec rake install`. To 
 
 ## Contributing
 
-Bug reports and pull requests are welcome on GitHub at https://github.com/[USERNAME]/flynn_deployer.
+Bug reports and pull requests are welcome on GitHub at https://github.com/code-mancers/chatops_deployer.
 
 
 ## License

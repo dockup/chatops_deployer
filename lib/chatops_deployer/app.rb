@@ -1,9 +1,9 @@
 require 'sinatra'
 require 'net/http'
 require 'json'
-require 'sinatra_deployer/deploy_job'
+require 'chatops_deployer/deploy_job'
 
-module SinatraDeployer
+module ChatopsDeployer
   class App < Sinatra::Base
     set :port, 8000
     set :bind, '0.0.0.0'
@@ -17,4 +17,4 @@ module SinatraDeployer
   end
 end
 
-SinatraDeployer::App.run!
+ChatopsDeployer::App.run!

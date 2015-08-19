@@ -2,7 +2,7 @@ require 'sucker_punch'
 require 'fileutils'
 require 'open3'
 
-module SinatraDeployer
+module ChatopsDeployer
   class DeployJob
     include SuckerPunch::Job
 

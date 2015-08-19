@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    sinatra_deployer (0.1.0)
+    chatops_deployer (0.1.0)
       sinatra
       sucker_punch
 
@@ -19,9 +19,9 @@ GEM
       rack (~> 1.4)
       rack-protection (~> 1.4)
       tilt (>= 1.3, < 3)
-    sucker_punch (1.5.0)
+    sucker_punch (1.3.2)
       celluloid (~> 0.16.0)
-    tilt (2.0.1)
+    tilt (1.4.1)
     timers (4.0.1)
       hitimes
 
@@ -30,8 +30,8 @@ PLATFORMS
 
 DEPENDENCIES
   bundler (~> 1.10)
+  chatops_deployer!
   rake (~> 10.0)
-  sinatra_deployer!
 
 BUNDLED WITH
    1.10.6

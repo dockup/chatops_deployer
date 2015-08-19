@@ -1,11 +1,11 @@
 # coding: utf-8
 lib = File.expand_path('../lib', __FILE__)
 $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
-require 'sinatra_deployer/version'
+require 'chatops_deployer/version'
 
 Gem::Specification.new do |spec|
-  spec.name          = "sinatra_deployer"
-  spec.version       = SinatraDeployer::VERSION
+  spec.name          = "chatops_deployer"
+  spec.version       = ChatopsDeployer::VERSION
   spec.authors       = ["TODO: Write your name"]
   spec.email         = ["TODO: Write your email address"]
 
