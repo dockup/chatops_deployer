@@ -22,9 +22,9 @@ module SinatraDeployer
 
       #TODO: No error conditions are handled in the following methods.
       if fetch_repository(repository, branch) && dockerup && add_nginx_config
-        callback(callback_url, :success)
+        #callback(callback_url, :success)
       else
-        callback(callback_url, :failure)
+        #callback(callback_url, :failure)
       end
     end
 
@@ -38,7 +38,7 @@ module SinatraDeployer
     def dockerup
       puts "Running docker container #{@deployment_alias}"
       system("docker build -t #{@deployment_alias} .") &&
-        system("docker run -P --name=#{@deployment_alias} #{@deployment_alias}")
+        system("docker run -rm -P -d --name=#{@deployment_alias} #{@deployment_alias}")
     end
 
     def add_nginx_config
