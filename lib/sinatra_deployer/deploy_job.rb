@@ -42,7 +42,7 @@ module SinatraDeployer
     def dockerup
       puts "Running docker container #{@deployment_alias}"
       system("docker build -t #{@deployment_alias} .") &&
-        system("docker run -rm -P -d --name=#{@deployment_alias} #{@deployment_alias}")
+        system("docker run --rm=true -P -d --name=#{@deployment_alias} #{@deployment_alias}")
     end
 
     def add_nginx_config
