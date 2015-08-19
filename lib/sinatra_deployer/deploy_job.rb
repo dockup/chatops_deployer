@@ -60,7 +60,7 @@ module SinatraDeployer
               error_log /var/log/nginx/#{@deployment_alias}.error.log;
 
               location / {
-                  proxy_pass http://#{get_docker_host};
+                  proxy_pass http://localhost:#{get_docker_port};
               }
           }
         EOM
@@ -68,20 +68,23 @@ module SinatraDeployer
           file << contents
         end
       end
+      system('service nginx reload')
     end
 
-    def get_docker_host
-      host = ""
-      Open3.popen3("docker inspect --format '{{ .NetworkSettings.IPAddress }}' #{@deployment_alias}") do |i, o|
-        output = o.read
-        host = output.chomp
-      end
+    def get_docker_port
+      #host = ""
+      port = ""
+      #Open3.popen3("docker inspect --format '{{ .NetworkSettings.IPAddress }}' #{@deployment_alias}") do |i, o|
+        #output = o.read
+        #host = output.chomp
+      #end
       Open3.popen3("docker port #{@deployment_alias}") do |i, o|
         output = o.read
         port = output.split(':').last.chomp
-        host += ":#{port}"
+        #host += ":#{port}"
       end
-      host
+      #host
+      port
     end
   end
 end
