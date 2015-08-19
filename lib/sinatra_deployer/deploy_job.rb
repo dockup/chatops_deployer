@@ -32,7 +32,11 @@ module SinatraDeployer
 
     def fetch_repository(repository, branch)
       puts "Cloning #{repository}:#{branch}"
-      system("git clone --branch=#{branch} --depth=1 #{repository} .")
+      if Dir['*'].empty?
+        system("git clone --branch=#{branch} --depth=1 #{repository} .")
+      else
+        system("git pull origin #{branch}")
+      end
     end
 
     def dockerup
