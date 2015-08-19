@@ -1,6 +1,7 @@
 require 'sinatra'
 require 'net/http'
 require 'json'
+require 'sinatra_deployer/deploy_job'
 
 module SinatraDeployer
   class App < Sinatra::Base
@@ -9,10 +10,9 @@ module SinatraDeployer
 
     post '/deploy' do
       content_type :json
-      puts request.body.read.inspect
+      json = JSON.parse(request.body.read)
 
-      #asynchronously fetch repo and deploy
-      {key: 'value'}.to_json
+      DeployJob.new.async.perform(repository: json['repository'], branch: json['branch'], callback_url: json['callback_url'])
     end
   end
 end
