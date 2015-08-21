@@ -7,12 +7,7 @@ module ChatopsDeployer
   class DeployJob
     include SuckerPunch::Job
 
-    WORKSPACE = ENV['DEPLOYER_WORKSPACE'] || '/var/www'
-    DEPLOYER_HOST = ENV['DEPLOYER_HOST'] || '127.0.0.1.xip.io'
-    NGINX_SITES_ENABLED_DIR = ENV['NGINX_SITES_ENABLED_DIR'] || '/etc/nginx/sites-enabled'
-
     def perform(repository:, branch:, callback_url:)
-      puts "RUNNING ASYNC === #{repository} == #{branch} == #{callback_url}"
       git_basename = repository.split('/').last
       project = File.basename(git_basename,File.extname(git_basename))
       @branch = branch
@@ -24,9 +19,9 @@ module ChatopsDeployer
 
       #TODO: No error conditions are handled in the following methods.
       if fetch_repository(repository, branch) && dockerup && add_nginx_config
-        callback(callback_url, :success)
+        callback(callback_url, :deployment_success)
       else
-        callback(callback_url, :failure)
+        callback(callback_url, :deployment_failure)
       end
     end
 
@@ -35,16 +30,16 @@ module ChatopsDeployer
     def fetch_repository(repository, branch)
       puts "Cloning #{repository}:#{branch}"
       if Dir['*'].empty?
-        system("git clone --branch=#{branch} --depth=1 #{repository} .")
+        system('git', 'clone', "--branch=#{branch}", '--depth=1', repository, '.')
       else
-        system("git pull origin #{branch}")
+        system('git', 'pull', 'origin', branch)
       end
     end
 
     def dockerup
       puts "Running docker container #{@deployment_alias}"
-      system("docker build -t #{@deployment_alias} .") &&
-        system("docker run -d -P --name=#{@deployment_alias} #{@deployment_alias}")
+      system('docker', 'build', '-t', @deployment_alias, '.') &&
+        system('docker', 'run', '-d', '-P', "--name=#{@deployment_alias}", @deployment_alias)
     end
 
     def add_nginx_config
@@ -79,7 +74,7 @@ module ChatopsDeployer
         #output = o.read
         #host = output.chomp
       #end
-      Open3.popen3("docker port #{@deployment_alias}") do |i, o|
+      Open3.popen3('docker', 'port', @deployment_alias) do |i, o|
         output = o.read
         port = output.split(':').last.chomp
       end
@@ -87,15 +82,12 @@ module ChatopsDeployer
     end
 
     def callback(callback_url, status)
-      body = {}
-      if status == :success
+      body = {status: status, branch: @branch}
+      if status == :deployment_success
         puts "Succesfully deployed #{@deployment_alias}.#{DEPLOYER_HOST}"
-        body[:status] = 'success'
-        body[:branch] = @branch
         body[:url] = "http://#{@deployment_alias}.#{DEPLOYER_HOST}"
       else
         puts "Failed deploying #{@deployment_alias}"
-        body[:status] = 'failure'
       end
       HTTParty.post(callback_url, body: body.to_json, headers: {'Content-Type' => 'application/json'})
     end
