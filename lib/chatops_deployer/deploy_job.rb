@@ -1,6 +1,7 @@
 require 'sucker_punch'
 require 'fileutils'
 require 'open3'
+require 'httparty'
 
 module ChatopsDeployer
   class DeployJob
@@ -14,17 +15,18 @@ module ChatopsDeployer
       puts "RUNNING ASYNC === #{repository} == #{branch} == #{callback_url}"
       git_basename = repository.split('/').last
       project = File.basename(git_basename,File.extname(git_basename))
+      @branch = branch
       @deployment_alias = "#{project}-#{branch}"
-      @project_dir = "#{WORKSPACE}/#{project}/#{branch}"
-      puts "Creating #{@project_dir} if it doesn't exist already"
-      FileUtils.mkdir_p @project_dir
-      Dir.chdir @project_dir
+      project_dir = "#{WORKSPACE}/#{project}/#{branch}"
+      puts "Creating #{project_dir} if it doesn't exist already"
+      FileUtils.mkdir_p project_dir
+      Dir.chdir project_dir
 
       #TODO: No error conditions are handled in the following methods.
       if fetch_repository(repository, branch) && dockerup && add_nginx_config
-        #callback(callback_url, :success)
+        callback(callback_url, :success)
       else
-        #callback(callback_url, :failure)
+        callback(callback_url, :failure)
       end
     end
 
@@ -72,7 +74,6 @@ module ChatopsDeployer
     end
 
     def get_docker_port
-      #host = ""
       port = ""
       #Open3.popen3("docker inspect --format '{{ .NetworkSettings.IPAddress }}' #{@deployment_alias}") do |i, o|
         #output = o.read
@@ -81,10 +82,22 @@ module ChatopsDeployer
       Open3.popen3("docker port #{@deployment_alias}") do |i, o|
         output = o.read
         port = output.split(':').last.chomp
-        #host += ":#{port}"
       end
-      #host
       port
+    end
+
+    def callback(callback_url, status)
+      body = {}
+      if status == :success
+        puts "Succesfully deployed #{@deployment_alias}.#{DEPLOYER_HOST}"
+        body[:status] = 'success'
+        body[:branch] = @branch
+        body[:url] = "http://#{@deployment_alias}.#{DEPLOYER_HOST}"
+      else
+        puts "Failed deploying #{@deployment_alias}"
+        body[:status] = 'failure'
+      end
+      HTTParty.post(callback_url, body: body.to_json, headers: {'Content-Type' => 'application/json'})
     end
   end
 end
