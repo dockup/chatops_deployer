@@ -3,6 +3,15 @@
 A lightweight Sinatra app that deploys staging apps of git branches
 in docker containers. Meant to be used with hubot.
 
+## Requirements
+
+1. virtualbox - For creating isolated VMs for each project
+3. docker-machine - For starting docker daemons on VMs
+2. docker-compose - For running multi-container apps using docker daemons on VMs
+4. nginx - For setting up a subdomain for each deployment
+
+TODO: setup script to install requirements on Ubuntu 14.04
+
 ## Installation
 
     $ gem install chatops_deployer
