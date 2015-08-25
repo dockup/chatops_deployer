@@ -23,7 +23,7 @@ module ChatopsDeployer
         end
       else
         puts "Directory exists. Fetching"
-        unless system('git', 'pull', 'origin', branch)
+        unless system('git', 'pull', 'origin', @branch)
           raise_error("Cannot pull git repository: #{@repository}, branch: #{@branch}")
         end
       end
