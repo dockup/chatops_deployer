@@ -1,7 +1,7 @@
 require 'sinatra'
 require 'net/http'
 require 'json'
-require 'chatops_deployer'
+require 'chatops_deployer/deploy_job'
 
 module ChatopsDeployer
   class App < Sinatra::Base
