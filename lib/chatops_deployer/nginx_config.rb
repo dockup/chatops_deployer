@@ -1,9 +1,14 @@
+require 'chatops_deployer/globals'
+require 'chatops_deployer/error'
+require 'chatops_deployer/command'
+
 module ChatopsDeployer
   class NginxConfig
-    class Error < StandardError; end
+    class Error < ChatopsDeployer::Error; end
+
     def initialize(sha1)
-      check_sites_enabled_dir_exists!
       @sha1 = sha1
+      check_sites_enabled_dir_exists!
       @config_path = File.join NGINX_SITES_ENABLED_DIR, sha1
     end
 
@@ -33,7 +38,7 @@ module ChatopsDeployer
         file << contents
       end
       puts "Reloading nginx"
-      system('service nginx reload')
+      Command.run('service nginx reload')
     end
 
     def remove

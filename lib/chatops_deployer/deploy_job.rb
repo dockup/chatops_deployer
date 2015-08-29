@@ -1,6 +1,5 @@
 require 'sucker_punch'
 require 'fileutils'
-require 'open3'
 require 'httparty'
 require 'chatops_deployer/project'
 require 'chatops_deployer/nginx_config'
@@ -11,30 +10,31 @@ module ChatopsDeployer
     include SuckerPunch::Job
 
     def perform(repository:, branch:, callback_url:)
-      project = Project.new(repository, branch)
-      nginx_config = NginxConfig.new(project.sha1)
-      container = Container.new(project.sha1)
+      @branch = branch
+      @project = Project.new(repository, branch)
+      nginx_config = NginxConfig.new(@project.sha1)
+      @container = Container.new(@project.sha1)
 
-      project.fetch_repo
-      Dir.chdir(project.directory) do
-        host = container.build
-        if nginx_config.add(host)
-          callback(callback_url, :deployment_success)
-        else
-          callback(callback_url, :deployment_failure)
-        end
+      @project.fetch_repo
+      Dir.chdir(@project.directory) do
+        @container.build
       end
+      nginx_config.add(@container.host)
+      callback(callback_url, :deployment_success)
+    rescue ChatopsDeployer::Error => e
+      callback(callback_url, :deployment_failure, e.message)
     end
 
     private
 
-    def callback(callback_url, status)
+    def callback(callback_url, status, reason=nil)
       body = {status: status, branch: @branch}
       if status == :deployment_success
-        puts "Succesfully deployed #{@deployment_alias}.#{DEPLOYER_HOST}"
-        body[:url] = "http://#{@deployment_alias}.#{DEPLOYER_HOST}"
+        puts "Succesfully deployed #{@project.sha1}.#{DEPLOYER_HOST}"
+        body[:url] = "http://#{@container.host}"
       else
-        puts "Failed deploying #{@deployment_alias}"
+        body[:reason] = reason
+        puts "Failed deploying #{@branch}. Reason: #{reason}"
       end
       HTTParty.post(callback_url, body: body.to_json, headers: {'Content-Type' => 'application/json'})
     end

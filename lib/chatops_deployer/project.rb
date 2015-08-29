@@ -1,9 +1,12 @@
+require 'chatops_deployer/globals'
+require 'chatops_deployer/error'
+require 'chatops_deployer/command'
 require 'digest/sha1'
 require 'fileutils'
 
 module ChatopsDeployer
   class Project
-    class Error < StandardError; end
+    class Error < ChatopsDeployer::Error; end
 
     attr_reader :sha1, :directory
     def initialize(repository, branch)
@@ -16,14 +19,16 @@ module ChatopsDeployer
 
     def fetch_repo
       puts "Fetching #{@repository}:#{@branch}"
-      if Dir['*'].empty?
+      if Dir.entries('.').size == 2
         puts "Directory not found. Cloning"
-        unless system('git', 'clone', "--branch=#{@branch}", '--depth=1', @repository, '.')
+        git_clone = Command.run('git', 'clone', "--branch=#{@branch}", '--depth=1', @repository, '.')
+        unless git_clone.success?
           raise_error("Cannot clone git repository: #{@repository}, branch: #{@branch}")
         end
       else
         puts "Directory exists. Fetching"
-        unless system('git', 'pull', 'origin', @branch)
+        git_pull = Command.run('git', 'pull', 'origin', @branch)
+        unless git_pull.success?
           raise_error("Cannot pull git repository: #{@repository}, branch: #{@branch}")
         end
       end

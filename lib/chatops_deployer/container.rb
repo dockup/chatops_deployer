@@ -1,17 +1,20 @@
-require 'open3'
+require 'chatops_deployer/error'
+require 'chatops_deployer/command'
+require 'yaml'
 
 module ChatopsDeployer
   class Container
-    class Error < StandardError;end
+    class Error < ChatopsDeployer::Error; end
+
+    attr_accessor :host
     def initialize(sha1)
-      @sha1
+      @sha1 = sha1
     end
 
     def build
       create_docker_machine
       setup_docker_environment
-      host = docker_compose
-      host
+      docker_compose
     end
 
     def destroy
@@ -24,38 +27,45 @@ module ChatopsDeployer
     def create_docker_machine
       raise_error("Cannot create VM because it already exists") if vm_exists?
       puts "Creating VM #{@sha1}"
-      system "docker-machine create --driver virtualbox #{@sha1}"
-      Open3.popen3("docker-machine ip #{@sha1}") do |i, o, err, thread|
-        raise_error('Cannot create VM for running docker containers') unless thread.value.success?
-        @ip = o.read.chomp
+      Command.run("docker-machine create --driver virtualbox #{@sha1}")
+      get_ip = Command.run("docker-machine ip #{@sha1}")
+      unless get_ip.success?
+        raise_error('Cannot create VM for running docker containers')
       end
+      @ip = get_ip.stdout.chomp
     end
 
     def setup_docker_environment
       puts "Setting up docker environment for #{@sha1}"
-      Open3.popen3("docker-machine env #{@sha1}") do |i, o, err, thread|
-        raise_error('Cannot set docker environment variables') unless thread.value.success?
-        output = o.read
-        matches = []
-        output.scan(/export (?<env_key>.*)="(?<env_value>.*)"\n/){ matches << $~ }
-        matches.each do |match|
-          ENV[match[:env_key]] = match[:env_value]
-        end
+      docker_env = Command.run("docker-machine env #{@sha1}")
+      raise_error('Cannot set docker environment variables') unless docker_env.success?
+
+      matches = []
+      docker_env.stdout.scan(/export (?<env_key>.*)="(?<env_value>.*)"\n/){ matches << $~ }
+      matches.each do |match|
+        ENV[match[:env_key]] = match[:env_value]
       end
+      #Open3.popen3("docker-machine env #{@sha1}") do |i, o, err, thread|
+        #raise_error('Cannot set docker environment variables') unless thread.value.success?
+        #output = o.read
+        #matches = []
+        #output.scan(/export (?<env_key>.*)="(?<env_value>.*)"\n/){ matches << $~ }
+        #matches.each do |match|
+          #ENV[match[:env_key]] = match[:env_value]
+        #end
+      #end
     end
 
     def docker_compose
       raise_error('Cannot run docker-compose because docker-compose.yml is missing') unless File.exists?('docker-compose.yml')
       puts "Running docker-compose up"
-      if system("docker-compose up -d")
-        "#{@ip}:#{get_port}"
-      else
-        raise_error('docker-compose failed')
-      end
+      docker_compose = Command.run('docker-compose up -d')
+      raise_error('docker-compose up failed') unless docker_compose.success?
+      @host = "#{@ip}:#{get_port}"
     end
 
     def vm_exists?
-      system("docker-machine url #{@sha1}")
+      Command.run("docker-machine url #{@sha1}").success?
     end
 
     def destroy_vm
@@ -75,14 +85,9 @@ module ChatopsDeployer
         .first # "3000:3000" or "3000"
         .split(':') # ["3000",...]
         .first # "3000"
-      Open3.popen3("docker-compose port #{service} #{first_port}") do |i, o|
-        begin
-          port = o.read.chomp.split(':').last
-          return port
-        rescue
-          raise_error("Cannot find exposed port for #{first_port} in service #{service}")
-        end
-      end
+      docker_port = Command.run "docker-compose port #{service} #{first_port}"
+      raise_error("Cannot find exposed port for #{first_port} in service #{service}") unless docker_port.success?
+      docker_port.stdout.chomp.split(':').last
     end
 
     def raise_error(message)
