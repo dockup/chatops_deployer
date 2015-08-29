@@ -8,6 +8,7 @@ module ChatopsDeployer
     end
 
     def run(*args)
+      puts "Running command: #{args.inspect}"
       @stdout, @stderr, @status = Open3.capture3(*args)
       self
     end

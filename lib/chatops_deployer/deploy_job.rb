@@ -15,8 +15,8 @@ module ChatopsDeployer
       nginx_config = NginxConfig.new(@project.sha1)
       @container = Container.new(@project.sha1)
 
-      @project.fetch_repo
       Dir.chdir(@project.directory) do
+        @project.fetch_repo
         @container.build
       end
       nginx_config.add(@container.host)
