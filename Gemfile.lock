@@ -6,7 +6,6 @@ PATH
       httparty
       sinatra
       sucker_punch
-      webmock
 
 GEM
   remote: https://rubygems.org/
@@ -73,12 +72,12 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
-  bundler (~> 1.10)
   chatops_deployer!
   memfs
   pry-byebug
-  rake (~> 10.0)
+  rake
   rspec
+  webmock
 
 BUNDLED WITH
    1.10.6
