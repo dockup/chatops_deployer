@@ -32,13 +32,14 @@ describe ChatopsDeployer::DeployJob do
         expect(container).to receive(:build)
         expect(container).to receive(:host).at_least(:once).and_return 'fake_host'
         expect(nginx_config).to receive(:add).with('fake_host')
+        expect(nginx_config).to receive(:url).at_least(:once).and_return('http://famous-five-17.example.com')
 
         stub_request(:post, callback_url)
           .with(
             body: {
               status: 'deployment_success',
               branch: branch,
-              url: "http://fake_host"
+              url: "http://famous-five-17.example.com"
             }.to_json,
             headers: {
               'Content-Type' => 'application/json'

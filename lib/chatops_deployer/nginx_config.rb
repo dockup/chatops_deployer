@@ -1,6 +1,7 @@
 require 'chatops_deployer/globals'
 require 'chatops_deployer/error'
 require 'chatops_deployer/command'
+require 'haikunator'
 
 module ChatopsDeployer
   class NginxConfig
@@ -19,14 +20,15 @@ module ChatopsDeployer
     def add(host)
       return if exists?
       raise_error("Cannot add nginx config because host is nil") if host.nil?
+      @haiku = Haikunator.haikunate
       contents = <<-EOM
         server{
             listen 80;
-            server_name #{@sha1}.#{DEPLOYER_HOST};
+            server_name #{@haiku}.#{DEPLOYER_HOST};
 
             # host error and access log
-            access_log /var/log/nginx/#{@sha1}.access.log;
-            error_log /var/log/nginx/#{@sha1}.error.log;
+            access_log /var/log/nginx/#{@haiku}.access.log;
+            error_log /var/log/nginx/#{@haiku}.error.log;
 
             location / {
                 proxy_pass http://#{host};
@@ -39,6 +41,10 @@ module ChatopsDeployer
       end
       puts "Reloading nginx"
       Command.run('service nginx reload')
+    end
+
+    def url
+      "http://#{@haiku}.#{DEPLOYER_HOST}"
     end
 
     def remove

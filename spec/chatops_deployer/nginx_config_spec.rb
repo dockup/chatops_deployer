@@ -56,15 +56,18 @@ describe ChatopsDeployer::NginxConfig do
       it 'creates an nginx config' do
         expect(ChatopsDeployer::Command).to receive(:run)
           .with('service nginx reload')
+        expect(Haikunator).to receive(:haikunate).and_return('shy-surf-3571')
+
         nginx_config.add('fake_host')
+
         expect(File.read('/etc/nginx/sites-enabled/fake_sha1')).to eql <<-EOM
         server{
             listen 80;
-            server_name fake_sha1.127.0.0.1.xip.io;
+            server_name shy-surf-3571.127.0.0.1.xip.io;
 
             # host error and access log
-            access_log /var/log/nginx/fake_sha1.access.log;
-            error_log /var/log/nginx/fake_sha1.error.log;
+            access_log /var/log/nginx/shy-surf-3571.access.log;
+            error_log /var/log/nginx/shy-surf-3571.error.log;
 
             location / {
                 proxy_pass http://fake_host;

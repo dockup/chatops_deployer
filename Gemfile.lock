@@ -3,6 +3,7 @@ PATH
   specs:
     chatops_deployer (0.1.0)
       command
+      haikunator
       httparty
       sinatra
       sucker_punch
@@ -21,6 +22,7 @@ GEM
     crack (0.4.2)
       safe_yaml (~> 1.0.0)
     diff-lcs (1.2.5)
+    haikunator (1.1.0)
     hitimes (1.2.2)
     httparty (0.13.5)
       json (~> 1.8)

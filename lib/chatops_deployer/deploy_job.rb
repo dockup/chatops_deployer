@@ -12,14 +12,14 @@ module ChatopsDeployer
     def perform(repository:, branch:, callback_url:)
       @branch = branch
       @project = Project.new(repository, branch)
-      nginx_config = NginxConfig.new(@project.sha1)
+      @nginx_config = NginxConfig.new(@project.sha1)
       @container = Container.new(@project.sha1)
 
       Dir.chdir(@project.directory) do
         @project.fetch_repo
         @container.build
       end
-      nginx_config.add(@container.host)
+      @nginx_config.add(@container.host)
       callback(callback_url, :deployment_success)
     rescue ChatopsDeployer::Error => e
       callback(callback_url, :deployment_failure, e.message)
@@ -30,8 +30,8 @@ module ChatopsDeployer
     def callback(callback_url, status, reason=nil)
       body = {status: status, branch: @branch}
       if status == :deployment_success
-        puts "Succesfully deployed #{@project.sha1}.#{DEPLOYER_HOST}"
-        body[:url] = "http://#{@container.host}"
+        body[:url] = @nginx_config.url
+        puts "Succesfully deployed #{@branch} at #{@nginx_config.url}"
       else
         body[:reason] = reason
         puts "Failed deploying #{@branch}. Reason: #{reason}"

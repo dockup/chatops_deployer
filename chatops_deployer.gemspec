@@ -23,4 +23,5 @@ Gem::Specification.new do |spec|
   spec.add_dependency "sucker_punch"
   spec.add_dependency "httparty"
   spec.add_dependency "command"
+  spec.add_dependency "haikunator"
 end
