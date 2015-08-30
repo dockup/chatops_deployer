@@ -62,10 +62,11 @@ module ChatopsDeployer
 
     def docker_compose_after_build
       if after_build = @chatops_config['after_build']
-        puts after_build.inspect
-        after_build.each do |service, command|
-          docker_compose_run = Command.run(command: "docker-compose run #{service} #{command}", log_file: File.join(LOG_DIR,@sha1))
-          raise_error("docker-compose run #{service} #{command} failed") unless docker_compose_run.success?
+        after_build.each do |service, commands|
+          commands.each do |command|
+            docker_compose_run = Command.run(command: "docker-compose run #{service} #{command}", log_file: File.join(LOG_DIR,@sha1))
+            raise_error("docker-compose run #{service} #{command} failed") unless docker_compose_run.success?
+          end
         end
       end
     end
