@@ -92,7 +92,7 @@ module ChatopsDeployer
 
     def get_url_on_vm(service, port)
       docker_port = Command.run "docker-compose port #{service} #{port}"
-      raise_error("Cannot find exposed port for #{first_port} in service #{service}") unless docker_port.success?
+      raise_error("Cannot find exposed port for #{port} in service #{service}") unless docker_port.success?
       port = docker_port.stdout.chomp.split(':').last
       "#{@ip}:#{port}"
     end
