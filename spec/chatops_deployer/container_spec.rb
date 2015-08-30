@@ -26,19 +26,34 @@ describe ChatopsDeployer::Container do
 
       File.open('docker-compose.yml', 'w') do |f|
         f.puts <<-EOM
-        db:
-          image: postgres
-        web:
-          build: .
-          command: bundle exec rails s -p 3000 -b '0.0.0.0'
-          volumes:
-            - .:/myapp
-          ports:
-            - "3000:3001"
-          links:
-            - db
-                EOM
+          db:
+            image: postgres
+          web:
+            build: .
+            command: bundle exec rails s -p 3000 -b '0.0.0.0'
+            volumes:
+              - .:/myapp
+            ports:
+              - "3000:3001"
+            links:
+              - db
+        EOM
       end
+
+      File.open('chatops_deployer.yml', 'w') do |f|
+        f.puts <<-EOM
+          expose:
+            web: 3000
+          after_build:
+            web: bundle exec rake db:create
+        EOM
+      end
+      expect(ChatopsDeployer::Command).to receive(:run)
+        .with('docker-compose build')
+        .and_return double(:command, success?: true)
+      expect(ChatopsDeployer::Command).to receive(:run)
+        .with('docker-compose run web bundle exec rake db:create')
+        .and_return double(:command, success?: true)
       expect(ChatopsDeployer::Command).to receive(:run)
         .with('docker-compose up -d')
         .and_return double(:command, success?: true)
@@ -51,7 +66,7 @@ describe ChatopsDeployer::Container do
 
       expect(ENV['KEY1']).to eql 'VALUE1'
       expect(ENV['KEY2']).to eql 'VALUE2'
-      expect(container.host).to eql('1.2.3.4:3001')
+      expect(container.urls).to eql({'web' => '1.2.3.4:3001'})
     end
   end
 end

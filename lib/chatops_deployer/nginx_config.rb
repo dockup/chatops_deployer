@@ -17,8 +17,32 @@ module ChatopsDeployer
       File.exists? @config_path
     end
 
+    def add_urls(urls)
+      return if urls.nil?
+      remove if exists?
+
+      urls.each do |service, url|
+        add(url)
+      end
+      puts "Reloading nginx"
+      Command.run('service nginx reload')
+    end
+
+    def remove
+      puts "Removing nginx config"
+      File.rm @config_path
+      system('service nginx reload')
+    end
+
+    private
+
+    def check_sites_enabled_dir_exists!
+      unless Dir.exist? NGINX_SITES_ENABLED_DIR
+        raise_error("Config directory #{NGINX_SITES_ENABLED_DIR} does not exist")
+      end
+    end
+
     def add(host)
-      return if exists?
       raise_error("Cannot add nginx config because host is nil") if host.nil?
       @haiku = Haikunator.haikunate
       contents = <<-EOM
@@ -36,28 +60,8 @@ module ChatopsDeployer
         }
       EOM
       puts "Adding nginx config at #{NGINX_SITES_ENABLED_DIR}/#{@sha1}"
-      File.open(@config_path, 'w') do |file|
+      File.open(@config_path, 'a') do |file|
         file << contents
-      end
-      puts "Reloading nginx"
-      Command.run('service nginx reload')
-    end
-
-    def url
-      "http://#{@haiku}.#{DEPLOYER_HOST}"
-    end
-
-    def remove
-      puts "Removing nginx config"
-      File.rm @config_path
-      system('service nginx reload')
-    end
-
-    private
-
-    def check_sites_enabled_dir_exists!
-      unless Dir.exist? NGINX_SITES_ENABLED_DIR
-        raise_error("Config directory #{NGINX_SITES_ENABLED_DIR} does not exist")
       end
     end
 

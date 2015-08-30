@@ -43,10 +43,10 @@ describe ChatopsDeployer::NginxConfig do
     end
   end
 
-  describe '#add' do
+  describe '#add_urls' do
     context 'when host is nil' do
       it 'raises error' do
-        expect { nginx_config.add(nil) }
+        expect { nginx_config.add_urls({web: nil}) }
           .to raise_error ChatopsDeployer::NginxConfig::Error,
             'fake_sha1: Nginx error: Cannot add nginx config because host is nil'
       end
@@ -57,8 +57,9 @@ describe ChatopsDeployer::NginxConfig do
         expect(ChatopsDeployer::Command).to receive(:run)
           .with('service nginx reload')
         expect(Haikunator).to receive(:haikunate).and_return('shy-surf-3571')
+        expect(Haikunator).to receive(:haikunate).and_return('long-flower-2811')
 
-        nginx_config.add('fake_host')
+        nginx_config.add_urls({web: 'fake_host', admin: 'fake_host2'})
 
         expect(File.read('/etc/nginx/sites-enabled/fake_sha1')).to eql <<-EOM
         server{
@@ -71,6 +72,18 @@ describe ChatopsDeployer::NginxConfig do
 
             location / {
                 proxy_pass http://fake_host;
+            }
+        }
+        server{
+            listen 80;
+            server_name long-flower-2811.127.0.0.1.xip.io;
+
+            # host error and access log
+            access_log /var/log/nginx/long-flower-2811.access.log;
+            error_log /var/log/nginx/long-flower-2811.error.log;
+
+            location / {
+                proxy_pass http://fake_host2;
             }
         }
       EOM

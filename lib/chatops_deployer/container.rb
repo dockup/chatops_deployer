@@ -6,15 +6,18 @@ module ChatopsDeployer
   class Container
     class Error < ChatopsDeployer::Error; end
 
-    attr_accessor :host
+    attr_reader :urls
     def initialize(sha1)
       @sha1 = sha1
+      @urls = {}
     end
 
     def build
       create_docker_machine
       setup_docker_environment
-      docker_compose
+      docker_compose_build
+      docker_compose_after_build
+      docker_compose_up
     end
 
     def destroy
@@ -45,23 +48,36 @@ module ChatopsDeployer
       matches.each do |match|
         ENV[match[:env_key]] = match[:env_value]
       end
-      #Open3.popen3("docker-machine env #{@sha1}") do |i, o, err, thread|
-        #raise_error('Cannot set docker environment variables') unless thread.value.success?
-        #output = o.read
-        #matches = []
-        #output.scan(/export (?<env_key>.*)="(?<env_value>.*)"\n/){ matches << $~ }
-        #matches.each do |match|
-          #ENV[match[:env_key]] = match[:env_value]
-        #end
-      #end
     end
 
-    def docker_compose
+    def docker_compose_build
       raise_error('Cannot run docker-compose because docker-compose.yml is missing') unless File.exists?('docker-compose.yml')
+      puts "Running docker-compose build"
+      docker_compose = Command.run('docker-compose build')
+      raise_error('docker-compose build failed') unless docker_compose.success?
+    end
+
+    def docker_compose_after_build
+      return unless File.exists? 'chatops_deployer.yml'
+      puts "Reading chatops_deployer.yml"
+      chatops_config = YAML.load_file('chatops_deployer.yml')
+      if expose = chatops_config['expose']
+        expose.each do |service, port|
+          @urls[service] = get_url_on_vm(service, port)
+        end
+      end
+      if after_build = chatops_config['after_build']
+        after_build.each do |service, command|
+          command = Command.run("docker-compose run #{service} #{command}")
+          raise_error("docker-compose run #{service} #{command} failed") unless command.success?
+        end
+      end
+    end
+
+    def docker_compose_up
       puts "Running docker-compose up"
       docker_compose = Command.run('docker-compose up -d')
       raise_error('docker-compose up failed') unless docker_compose.success?
-      @host = "#{@ip}:#{get_port}"
     end
 
     def vm_exists?
@@ -74,20 +90,11 @@ module ChatopsDeployer
         system("docker-machine rm #{@sha1}")
     end
 
-    def get_port
-      services_with_ports = YAML.load_file('docker-compose.yml').select{|k,v| v.has_key?('ports')}
-      raise_error("docker-compose.yml does not expose any port") if services_with_ports.empty?
-      #TODO: We're now picking the first port we find in docker-compose as the
-      # primary web service port. There should be a way to specify which port
-      # of which service should be used as the http port
-      service, config = services_with_ports.first
-      first_port = config['ports']
-        .first # "3000:3000" or "3000"
-        .split(':') # ["3000",...]
-        .first # "3000"
-      docker_port = Command.run "docker-compose port #{service} #{first_port}"
+    def get_url_on_vm(service, port)
+      docker_port = Command.run "docker-compose port #{service} #{port}"
       raise_error("Cannot find exposed port for #{first_port} in service #{service}") unless docker_port.success?
-      docker_port.stdout.chomp.split(':').last
+      port = docker_port.stdout.chomp.split(':').last
+      "#{@ip}:#{port}"
     end
 
     def raise_error(message)
