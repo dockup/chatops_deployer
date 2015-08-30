@@ -78,10 +78,18 @@ module ChatopsDeployer
     end
 
     def docker_compose_after_run
-      puts @chatops_config.inspect
       if expose = @chatops_config['expose']
         expose.each do |service, port|
           @urls[service] = get_url_on_vm(service, port)
+        end
+      end
+
+      if after_run = @chatops_config['after_run']
+        after_run.each do |service, commands|
+          commands.each do |command|
+            docker_compose_run = Command.run(command: "docker-compose run #{service} #{command}", log_file: File.join(LOG_DIR,@sha1))
+            raise_error("docker-compose run #{service} #{command} failed") unless docker_compose_run.success?
+          end
         end
       end
     end
