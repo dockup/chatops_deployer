@@ -46,7 +46,8 @@ describe ChatopsDeployer::Container do
           expose:
             web: 3000
           after_build:
-            web: bundle exec rake db:create
+            web:
+              - bundle exec rake db:create
         EOM
       end
       expect(ChatopsDeployer::Command).to receive(:run)
