@@ -61,9 +61,10 @@ module ChatopsDeployer
 
     def docker_compose_after_build
       if after_build = @chatops_config['after_build']
+        puts after_build.inspect
         after_build.each do |service, command|
-          command = Command.run("docker-compose run #{service} #{command}")
-          raise_error("docker-compose run #{service} #{command} failed") unless command.success?
+          docker_compose_run = Command.run("docker-compose run #{service} #{command}")
+          raise_error("docker-compose run #{service} #{command} failed") unless docker_compose_run.success?
         end
       end
     end
