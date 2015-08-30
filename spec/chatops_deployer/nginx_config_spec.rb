@@ -55,7 +55,7 @@ describe ChatopsDeployer::NginxConfig do
     context 'when host is present' do
       it 'creates an nginx config' do
         expect(ChatopsDeployer::Command).to receive(:run)
-          .with('service nginx reload')
+          .with(command: 'service nginx reload', log_file: '/var/log/chatops_deployer/fake_sha1')
         expect(Haikunator).to receive(:haikunate).and_return('shy-surf-3571')
         expect(Haikunator).to receive(:haikunate).and_return('long-flower-2811')
 

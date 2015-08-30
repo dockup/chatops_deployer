@@ -25,7 +25,7 @@ module ChatopsDeployer
         add(url)
       end
       puts "Reloading nginx"
-      Command.run('service nginx reload')
+      Command.run(command: 'service nginx reload', log_file: File.join(LOG_DIR, @sha1))
     end
 
     def remove

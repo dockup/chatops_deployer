@@ -21,13 +21,13 @@ module ChatopsDeployer
       puts "Fetching #{@repository}:#{@branch}"
       if Dir.entries('.').size == 2
         puts "Directory not found. Cloning"
-        git_clone = Command.run('git', 'clone', "--branch=#{@branch}", '--depth=1', @repository, '.')
+        git_clone = Command.run(command: ['git', 'clone', "--branch=#{@branch}", '--depth=1', @repository, '.'], log_file: File.join(LOG_DIR, @sha1))
         unless git_clone.success?
           raise_error("Cannot clone git repository: #{@repository}, branch: #{@branch}")
         end
       else
         puts "Directory exists. Fetching"
-        git_pull = Command.run('git', 'pull', 'origin', @branch)
+        git_pull = Command.run(command: ['git', 'pull', 'origin', @branch], log_file: File.join(LOG_DIR, @sha1))
         unless git_pull.success?
           raise_error("Cannot pull git repository: #{@repository}, branch: #{@branch}")
         end

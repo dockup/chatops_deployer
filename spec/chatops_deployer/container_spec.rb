@@ -2,18 +2,19 @@ require 'chatops_deployer/container'
 
 describe ChatopsDeployer::Container do
   let(:container) { ChatopsDeployer::Container.new('fake_sha1') }
+  let(:log_file) { '/var/log/chatops_deployer/fake_sha1' }
   describe '#build' do
     it 'creates a VM with docker machine' do
       expect(ChatopsDeployer::Command).to receive(:run)
-        .with('docker-machine url fake_sha1')
+        .with(command: 'docker-machine url fake_sha1', log_file: log_file)
         .and_return double(:command, success?: false)
 
       expect(ChatopsDeployer::Command).to receive(:run)
-        .with('docker-machine create --driver virtualbox fake_sha1')
+        .with(command: 'docker-machine create --driver virtualbox fake_sha1', log_file: log_file)
 
       expect(ChatopsDeployer::Command).to receive(:run)
-        .with('docker-machine ip fake_sha1')
-        .and_return double(:command, success?: true, stdout: '1.2.3.4')
+        .with(command: 'docker-machine ip fake_sha1', log_file: log_file)
+        .and_return double(:command, success?: true, output: '1.2.3.4')
 
       fake_env = <<-STR
       export KEY1="VALUE1"
@@ -21,8 +22,8 @@ describe ChatopsDeployer::Container do
       # some comment
       STR
       expect(ChatopsDeployer::Command).to receive(:run)
-        .with('docker-machine env fake_sha1')
-        .and_return double(:command, success?: true, stdout: fake_env)
+        .with(command: 'docker-machine env fake_sha1', log_file: log_file)
+        .and_return double(:command, success?: true, output: fake_env)
 
       File.open('docker-compose.yml', 'w') do |f|
         f.puts <<-EOM
@@ -49,18 +50,18 @@ describe ChatopsDeployer::Container do
         EOM
       end
       expect(ChatopsDeployer::Command).to receive(:run)
-        .with('docker-compose build')
+        .with(command: 'docker-compose build', log_file: log_file)
         .and_return double(:command, success?: true)
       expect(ChatopsDeployer::Command).to receive(:run)
-        .with('docker-compose run web bundle exec rake db:create')
+        .with(command: 'docker-compose run web bundle exec rake db:create', log_file: log_file)
         .and_return double(:command, success?: true)
       expect(ChatopsDeployer::Command).to receive(:run)
-        .with('docker-compose up -d')
+        .with(command: 'docker-compose up -d', log_file: log_file)
         .and_return double(:command, success?: true)
 
       expect(ChatopsDeployer::Command).to receive(:run)
-        .with('docker-compose port web 3000')
-        .and_return double(:command, success?: true, stdout: '0.0.0.0:3001')
+        .with(command: 'docker-compose port web 3000', log_file: log_file)
+        .and_return double(:command, success?: true, output: '0.0.0.0:3001')
 
       container.build
 

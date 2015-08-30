@@ -1,5 +1,6 @@
 require 'chatops_deployer/error'
 require 'chatops_deployer/command'
+require 'chatops_deployer/globals'
 require 'yaml'
 
 module ChatopsDeployer
@@ -31,21 +32,21 @@ module ChatopsDeployer
     def create_docker_machine
       raise_error("Cannot create VM because it already exists") if vm_exists?
       puts "Creating VM #{@sha1}"
-      Command.run("docker-machine create --driver virtualbox #{@sha1}")
-      get_ip = Command.run("docker-machine ip #{@sha1}")
+      Command.run(command: "docker-machine create --driver virtualbox #{@sha1}", log_file: File.join(LOG_DIR,@sha1))
+      get_ip = Command.run(command: "docker-machine ip #{@sha1}", log_file: File.join(LOG_DIR,@sha1))
       unless get_ip.success?
         raise_error('Cannot create VM for running docker containers')
       end
-      @ip = get_ip.stdout.chomp
+      @ip = get_ip.output.chomp
     end
 
     def setup_docker_environment
       puts "Setting up docker environment for #{@sha1}"
-      docker_env = Command.run("docker-machine env #{@sha1}")
+      docker_env = Command.run(command: "docker-machine env #{@sha1}", log_file: File.join(LOG_DIR,@sha1))
       raise_error('Cannot set docker environment variables') unless docker_env.success?
 
       matches = []
-      docker_env.stdout.scan(/export (?<env_key>.*)="(?<env_value>.*)"\n/){ matches << $~ }
+      docker_env.output.scan(/export (?<env_key>.*)="(?<env_value>.*)"\n/){ matches << $~ }
       matches.each do |match|
         ENV[match[:env_key]] = match[:env_value]
       end
@@ -55,7 +56,7 @@ module ChatopsDeployer
       raise_error('Cannot run docker-compose because docker-compose.yml is missing') unless File.exists?('docker-compose.yml')
       @chatops_config = File.exists?('chatops_deployer.yml') ? YAML.load_file('chatops_deployer.yml') : {}
       puts "Running docker-compose build"
-      docker_compose = Command.run('docker-compose build')
+      docker_compose = Command.run(command: 'docker-compose build', log_file: File.join(LOG_DIR,@sha1))
       raise_error('docker-compose build failed') unless docker_compose.success?
     end
 
@@ -63,7 +64,7 @@ module ChatopsDeployer
       if after_build = @chatops_config['after_build']
         puts after_build.inspect
         after_build.each do |service, command|
-          docker_compose_run = Command.run("docker-compose run #{service} #{command}")
+          docker_compose_run = Command.run(command: "docker-compose run #{service} #{command}", log_file: File.join(LOG_DIR,@sha1))
           raise_error("docker-compose run #{service} #{command} failed") unless docker_compose_run.success?
         end
       end
@@ -71,7 +72,7 @@ module ChatopsDeployer
 
     def docker_compose_up
       puts "Running docker-compose up"
-      docker_compose = Command.run('docker-compose up -d')
+      docker_compose = Command.run(command: 'docker-compose up -d', log_file: File.join(LOG_DIR,@sha1))
       raise_error('docker-compose up failed') unless docker_compose.success?
     end
 
@@ -85,7 +86,7 @@ module ChatopsDeployer
     end
 
     def vm_exists?
-      Command.run("docker-machine url #{@sha1}").success?
+      Command.run(command: "docker-machine url #{@sha1}", log_file: File.join(LOG_DIR,@sha1)).success?
     end
 
     def destroy_vm
@@ -95,9 +96,9 @@ module ChatopsDeployer
     end
 
     def get_url_on_vm(service, port)
-      docker_port = Command.run "docker-compose port #{service} #{port}"
+      docker_port = Command.run(command: "docker-compose port #{service} #{port}", log_file: File.join(LOG_DIR,@sha1))
       raise_error("Cannot find exposed port for #{port} in service #{service}") unless docker_port.success?
-      port = docker_port.stdout.chomp.split(':').last
+      port = docker_port.output.chomp.split(':').last
       "#{@ip}:#{port}"
     end
 
