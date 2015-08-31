@@ -45,14 +45,11 @@ describe ChatopsDeployer::Container do
         f.puts <<-EOM
           expose:
             web: 3000
-          after_build:
+          commands:
             web:
               - bundle exec rake db:create
         EOM
       end
-      expect(ChatopsDeployer::Command).to receive(:run)
-        .with(command: 'docker-compose build', log_file: log_file)
-        .and_return double(:command, success?: true)
       expect(ChatopsDeployer::Command).to receive(:run)
         .with(command: 'docker-compose run web bundle exec rake db:create', log_file: log_file)
         .and_return double(:command, success?: true)

@@ -16,10 +16,8 @@ module ChatopsDeployer
     def build
       create_docker_machine
       setup_docker_environment
-      docker_compose_build
-      docker_compose_after_build
+      docker_compose_run_commands
       docker_compose_up
-      docker_compose_after_run
     end
 
     def destroy
@@ -52,17 +50,10 @@ module ChatopsDeployer
       end
     end
 
-    def docker_compose_build
-      raise_error('Cannot run docker-compose because docker-compose.yml is missing') unless File.exists?('docker-compose.yml')
+    def docker_compose_run_commands
       @chatops_config = File.exists?('chatops_deployer.yml') ? YAML.load_file('chatops_deployer.yml') : {}
-      puts "Running docker-compose build"
-      docker_compose = Command.run(command: 'docker-compose build', log_file: File.join(LOG_DIR,@sha1))
-      raise_error('docker-compose build failed') unless docker_compose.success?
-    end
-
-    def docker_compose_after_build
-      if after_build = @chatops_config['after_build']
-        after_build.each do |service, commands|
+      if commands_hash = @chatops_config['commands']
+        commands_hash.each do |service, commands|
           commands.each do |command|
             docker_compose_run = Command.run(command: "docker-compose run #{service} #{command}", log_file: File.join(LOG_DIR,@sha1))
             raise_error("docker-compose run #{service} #{command} failed") unless docker_compose_run.success?
@@ -75,21 +66,10 @@ module ChatopsDeployer
       puts "Running docker-compose up"
       docker_compose = Command.run(command: 'docker-compose up -d', log_file: File.join(LOG_DIR,@sha1))
       raise_error('docker-compose up failed') unless docker_compose.success?
-    end
 
-    def docker_compose_after_run
       if expose = @chatops_config['expose']
         expose.each do |service, port|
           @urls[service] = get_url_on_vm(service, port)
-        end
-      end
-
-      if after_run = @chatops_config['after_run']
-        after_run.each do |service, commands|
-          commands.each do |command|
-            docker_compose_run = Command.run(command: "docker-compose run #{service} #{command}", log_file: File.join(LOG_DIR,@sha1))
-            raise_error("docker-compose run #{service} #{command} failed") unless docker_compose_run.success?
-          end
         end
       end
     end
