@@ -14,7 +14,11 @@ module ChatopsDeployer
         out_err.each_line do |line|
           puts line
           @out << line
-          f && f.write(line) && f.flush
+          if f
+            f.write("Running command: #{command.inspect}")
+            f.write(line)
+            f.flush
+          end
         end
         @status = thread.value
         f.close
