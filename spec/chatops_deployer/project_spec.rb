@@ -2,6 +2,7 @@ require 'chatops_deployer/project'
 
 describe ChatopsDeployer::Project do
   let(:project) { ChatopsDeployer::Project.new('repo', 'branch') }
+  let(:log_file) { "/var/log/chatops_deployer/#{project.sha1}" }
 
   describe "initialize" do
     it 'creates the project directory' do
@@ -22,7 +23,8 @@ describe ChatopsDeployer::Project do
     context 'when directory is empty' do
       it 'clones the git repo' do
         git_command = ["git", "clone", "--branch=branch", "--depth=1", "repo", "."]
-        expect(ChatopsDeployer::Command).to receive(:run).with(*git_command) do
+        expect(ChatopsDeployer::Command).to receive(:run)
+          .with(command: git_command, log_file: log_file) do
           double(:command, success?: true)
         end
         Dir.chdir project.directory
@@ -37,7 +39,8 @@ describe ChatopsDeployer::Project do
 
         Dir.chdir project.directory
         git_command = ["git", "pull", "origin", "branch"]
-        expect(ChatopsDeployer::Command).to receive(:run).with(*git_command) do
+        expect(ChatopsDeployer::Command).to receive(:run)
+          .with(command: git_command, log_file: log_file) do
           double(:command, success?: true)
         end
         project.fetch_repo
