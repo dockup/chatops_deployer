@@ -14,6 +14,13 @@ module ChatopsDeployer
 
       DeployJob.new.async.perform(repository: json['repository'], branch: json['branch'], callback_url: json['callback_url'])
     end
+
+    post '/destroy' do
+      content_type :json
+      json = JSON.parse(request.body.read)
+
+      DestroyJob.new.async.perform(repository: json['repository'], branch: json['branch'], callback_url: json['callback_url'])
+    end
   end
 end
 
