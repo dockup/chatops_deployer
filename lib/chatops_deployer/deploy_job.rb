@@ -30,7 +30,7 @@ module ChatopsDeployer
     def callback(callback_url, status, reason=nil)
       body = {status: status, branch: @branch}
       if status == :deployment_success
-        body[:url] = @container.urls
+        body[:url] = @nginx_config.urls
         puts "Succesfully deployed #{@branch}"
       else
         body[:reason] = reason

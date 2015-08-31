@@ -30,8 +30,10 @@ describe ChatopsDeployer::DeployJob do
         expect(project).to receive(:fetch_repo)
         expect(project).to receive(:directory).and_return('/tmp')
         expect(container).to receive(:build)
-        urls = {'web' => 'http://famous-five-17.example.com'}
+        urls = {'web' => '192.168.0.1:3000'}
+        exposed_urls = {'web' => 'http://famous-five-17.example.com'}
         expect(container).to receive(:urls).at_least(:once).and_return(urls)
+        expect(nginx_config).to receive(:urls).at_least(:once).and_return(exposed_urls)
 
         expect(nginx_config).to receive(:add_urls).with urls
 

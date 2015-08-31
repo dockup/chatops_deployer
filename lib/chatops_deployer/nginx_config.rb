@@ -6,12 +6,15 @@ require 'fileutils'
 
 module ChatopsDeployer
   class NginxConfig
+    attr_reader :urls
+
     class Error < ChatopsDeployer::Error; end
 
     def initialize(sha1)
       @sha1 = sha1
       check_sites_enabled_dir_exists!
       @config_path = File.join NGINX_SITES_ENABLED_DIR, sha1
+      @urls = {}
     end
 
     def exists?
@@ -23,7 +26,7 @@ module ChatopsDeployer
       remove if exists?
 
       urls.each do |service, url|
-        add(url)
+        @urls[service] = add(url)
       end
       puts "Reloading nginx"
       Command.run(command: 'service nginx reload', log_file: File.join(LOG_DIR, @sha1))
@@ -46,10 +49,11 @@ module ChatopsDeployer
     def add(host)
       raise_error("Cannot add nginx config because host is nil") if host.nil?
       @haiku = Haikunator.haikunate
+      exposed_host = "#{@haiku}.#{DEPLOYER_HOST}"
       contents = <<-EOM
         server{
             listen 80;
-            server_name #{@haiku}.#{DEPLOYER_HOST};
+            server_name #{exposed_host};
 
             # host error and access log
             access_log /var/log/nginx/#{@haiku}.access.log;
@@ -64,6 +68,7 @@ module ChatopsDeployer
       File.open(@config_path, 'a') do |file|
         file << contents
       end
+      "http://#{exposed_host}"
     end
 
     def raise_error(message)
