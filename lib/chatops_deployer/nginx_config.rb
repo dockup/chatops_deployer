@@ -2,6 +2,7 @@ require 'chatops_deployer/globals'
 require 'chatops_deployer/error'
 require 'chatops_deployer/command'
 require 'haikunator'
+require 'fileutils'
 
 module ChatopsDeployer
   class NginxConfig
@@ -30,7 +31,7 @@ module ChatopsDeployer
 
     def remove
       puts "Removing nginx config"
-      File.rm @config_path
+      FileUtils.rm @config_path
       system('service nginx reload')
     end
 
