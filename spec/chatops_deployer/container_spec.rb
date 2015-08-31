@@ -47,11 +47,18 @@ describe ChatopsDeployer::Container do
             web: 3000
           commands:
             web:
-              - bundle exec rake db:create
+              first_run:
+                - bundle exec rake db:create
+                - bundle exec rake db:schema:load
+              next_runs:
+                - bundle exec rake db:migrate
         EOM
       end
       expect(ChatopsDeployer::Command).to receive(:run)
         .with(command: 'docker-compose run web bundle exec rake db:create', log_file: log_file)
+        .and_return double(:command, success?: true)
+      expect(ChatopsDeployer::Command).to receive(:run)
+        .with(command: 'docker-compose run web bundle exec rake db:schema:load', log_file: log_file)
         .and_return double(:command, success?: true)
       expect(ChatopsDeployer::Command).to receive(:run)
         .with(command: 'docker-compose up -d', log_file: log_file)
