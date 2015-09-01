@@ -11,6 +11,7 @@ module ChatopsDeployer
     def initialize(sha1)
       @sha1 = sha1
       @urls = {}
+      @first_run = false
     end
 
     def build
@@ -28,9 +29,11 @@ module ChatopsDeployer
     private
 
     def create_docker_machine
-      raise_error("Cannot create VM because it already exists") if vm_exists?
-      puts "Creating VM #{@sha1}"
-      Command.run(command: "docker-machine create --driver virtualbox #{@sha1}", log_file: File.join(LOG_DIR,@sha1))
+      unless vm_exists?
+        puts "Creating VM #{@sha1}"
+        Command.run(command: "docker-machine create --driver virtualbox #{@sha1}", log_file: File.join(LOG_DIR,@sha1))
+        @first_run = true
+      end
       get_ip = Command.run(command: "docker-machine ip #{@sha1}", log_file: File.join(LOG_DIR,@sha1))
       unless get_ip.success?
         raise_error('Cannot create VM for running docker containers')
@@ -52,8 +55,13 @@ module ChatopsDeployer
 
     def docker_compose_run_commands
       @chatops_config = File.exists?('chatops_deployer.yml') ? YAML.load_file('chatops_deployer.yml') : {}
-      if commands_hash = @chatops_config['commands']
-        commands_hash.each do |service, commands|
+      if service_commands = @chatops_config['commands']
+        service_commands.each do |service, commands_hash|
+          commands = if @first_run
+            commands_hash['first_run'] || []
+          else
+            commands_hash['next_runs'] || []
+          end
           commands.each do |command|
             docker_compose_run = Command.run(command: "docker-compose run #{service} #{command}", log_file: File.join(LOG_DIR,@sha1))
             raise_error("docker-compose run #{service} #{command} failed") unless docker_compose_run.success?
@@ -63,9 +71,15 @@ module ChatopsDeployer
     end
 
     def docker_compose_up
-      puts "Running docker-compose up"
-      docker_compose = Command.run(command: 'docker-compose up -d', log_file: File.join(LOG_DIR,@sha1))
-      raise_error('docker-compose up failed') unless docker_compose.success?
+      if @first_run
+        puts "Running docker-compose up"
+        docker_compose = Command.run(command: 'docker-compose up -d', log_file: File.join(LOG_DIR,@sha1))
+        raise_error('docker-compose up failed') unless docker_compose.success?
+      else
+        puts "Running docker-compose restart"
+        docker_compose = Command.run(command: 'docker-compose restart', log_file: File.join(LOG_DIR,@sha1))
+        raise_error('docker-compose restart failed') unless docker_compose.success?
+      end
 
       if expose = @chatops_config['expose']
         expose.each do |service, port|
