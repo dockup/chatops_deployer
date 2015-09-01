@@ -4,13 +4,8 @@ describe ChatopsDeployer::Container do
   let(:container) { ChatopsDeployer::Container.new('fake_sha1') }
   let(:log_file) { '/var/log/chatops_deployer/fake_sha1' }
   describe '#build' do
-    it 'creates a VM with docker machine' do
-      expect(ChatopsDeployer::Command).to receive(:run)
-        .with(command: 'docker-machine url fake_sha1', log_file: log_file)
-        .and_return double(:command, success?: false)
+    before do
 
-      expect(ChatopsDeployer::Command).to receive(:run)
-        .with(command: 'docker-machine create --driver virtualbox fake_sha1', log_file: log_file)
 
       expect(ChatopsDeployer::Command).to receive(:run)
         .with(command: 'docker-machine ip fake_sha1', log_file: log_file)
@@ -54,6 +49,17 @@ describe ChatopsDeployer::Container do
                 - bundle exec rake db:migrate
         EOM
       end
+
+      expect(ChatopsDeployer::Command).to receive(:run)
+        .with(command: 'docker-compose port web 3000', log_file: log_file)
+        .and_return double(:command, success?: true, output: '0.0.0.0:3001')
+    end
+    it 'creates a VM with docker machine' do
+      expect(ChatopsDeployer::Command).to receive(:run)
+        .with(command: 'docker-machine url fake_sha1', log_file: log_file)
+        .and_return double(:command, success?: false)
+      expect(ChatopsDeployer::Command).to receive(:run)
+        .with(command: 'docker-machine create --driver virtualbox fake_sha1', log_file: log_file)
       expect(ChatopsDeployer::Command).to receive(:run)
         .with(command: 'docker-compose run web bundle exec rake db:create', log_file: log_file)
         .and_return double(:command, success?: true)
@@ -64,15 +70,31 @@ describe ChatopsDeployer::Container do
         .with(command: 'docker-compose up -d', log_file: log_file)
         .and_return double(:command, success?: true)
 
-      expect(ChatopsDeployer::Command).to receive(:run)
-        .with(command: 'docker-compose port web 3000', log_file: log_file)
-        .and_return double(:command, success?: true, output: '0.0.0.0:3001')
-
       container.build
 
       expect(ENV['KEY1']).to eql 'VALUE1'
       expect(ENV['KEY2']).to eql 'VALUE2'
       expect(container.urls).to eql({'web' => '1.2.3.4:3001'})
+    end
+
+    context 'next runs' do
+      it 'runs the next_runs commands' do
+        expect(ChatopsDeployer::Command).to receive(:run)
+          .with(command: 'docker-machine url fake_sha1', log_file: log_file)
+          .and_return double(:command, success?: true)
+        expect(ChatopsDeployer::Command).to receive(:run)
+          .with(command: 'docker-compose run web bundle exec rake db:migrate', log_file: log_file)
+          .and_return double(:command, success?: true)
+        expect(ChatopsDeployer::Command).to receive(:run)
+          .with(command: 'docker-compose restart', log_file: log_file)
+          .and_return double(:command, success?: true)
+
+        container.build
+
+        expect(ENV['KEY1']).to eql 'VALUE1'
+        expect(ENV['KEY2']).to eql 'VALUE2'
+        expect(container.urls).to eql({'web' => '1.2.3.4:3001'})
+      end
     end
   end
 end

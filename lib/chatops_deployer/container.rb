@@ -57,12 +57,11 @@ module ChatopsDeployer
       @chatops_config = File.exists?('chatops_deployer.yml') ? YAML.load_file('chatops_deployer.yml') : {}
       if service_commands = @chatops_config['commands']
         service_commands.each do |service, commands_hash|
-          if @first_run
-            commands = commands_hash['first_run']
+          commands = if @first_run
+            commands_hash['first_run'] || []
           else
-            commands = commands_hash['next_runs']
+            commands_hash['next_runs'] || []
           end
-          commands ||= []
           commands.each do |command|
             docker_compose_run = Command.run(command: "docker-compose run #{service} #{command}", log_file: File.join(LOG_DIR,@sha1))
             raise_error("docker-compose run #{service} #{command} failed") unless docker_compose_run.success?
