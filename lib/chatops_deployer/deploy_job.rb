@@ -9,14 +9,15 @@ module ChatopsDeployer
   class DeployJob
     include SuckerPunch::Job
 
-    def perform(repository:, branch:, callback_url:)
+    def perform(repository:, branch:, config_file: nil,callback_url:)
       @branch = branch
-      @project = Project.new(repository, branch)
-      @nginx_config = NginxConfig.new(@project.sha1)
-      @container = Container.new(@project.sha1)
+      @project = Project.new(repository, branch, config_file)
+      @nginx_config = NginxConfig.new(@project)
+      @container = Container.new(@project)
 
       Dir.chdir(@project.directory) do
         @project.fetch_repo
+        @project.copy_files_from_deployer
         @container.build
       end
       @nginx_config.add_urls(@container.urls)

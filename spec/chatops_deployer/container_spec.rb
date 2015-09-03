@@ -1,7 +1,11 @@
 require 'chatops_deployer/container'
 
 describe ChatopsDeployer::Container do
-  let(:container) { ChatopsDeployer::Container.new('fake_sha1') }
+  let(:project) do
+    config = YAML.load_file 'chatops_deployer.yml'
+    instance_double('Project', sha1: 'fake_sha1', config: config)
+  end
+  let(:container) { ChatopsDeployer::Container.new(project) }
   let(:log_file) { '/var/log/chatops_deployer/fake_sha1' }
   describe '#build' do
     before do
@@ -39,7 +43,7 @@ describe ChatopsDeployer::Container do
       File.open('chatops_deployer.yml', 'w') do |f|
         f.puts <<-EOM
           expose:
-            web: 3000
+            web: [3000]
           commands:
             web:
               first_run:
@@ -74,7 +78,7 @@ describe ChatopsDeployer::Container do
 
       expect(ENV['KEY1']).to eql 'VALUE1'
       expect(ENV['KEY2']).to eql 'VALUE2'
-      expect(container.urls).to eql({'web' => '1.2.3.4:3001'})
+      expect(container.urls).to eql({'web' => ['1.2.3.4:3001']})
     end
 
     context 'next runs' do
@@ -93,7 +97,7 @@ describe ChatopsDeployer::Container do
 
         expect(ENV['KEY1']).to eql 'VALUE1'
         expect(ENV['KEY2']).to eql 'VALUE2'
-        expect(container.urls).to eql({'web' => '1.2.3.4:3001'})
+        expect(container.urls).to eql({'web' => ['1.2.3.4:3001']})
       end
     end
   end

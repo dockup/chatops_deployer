@@ -33,7 +33,7 @@ describe ChatopsDeployer::Project do
     end
 
     context 'when directory is not empty' do
-      it 'clones the git repo' do
+      it 'pulls changes from remote branch' do
         dummy_file = File.join project.directory, 'dummy'
         File.open(dummy_file, 'w')
 
@@ -44,6 +44,90 @@ describe ChatopsDeployer::Project do
           double(:command, success?: true)
         end
         project.fetch_repo
+      end
+    end
+
+    context 'when config_file is present' do
+      before do
+        Dir.chdir project.directory
+        File.open('chatops_deployer.yml', 'w') do |f|
+          f.puts <<-EOM
+            key: value
+          EOM
+        end
+      end
+      it 'loads the YML file into config' do
+        git_command = ["git", "pull", "origin", "branch"]
+        expect(ChatopsDeployer::Command).to receive(:run)
+          .with(command: git_command, log_file: log_file) do
+          double(:command, success?: true)
+        end
+        project.fetch_repo
+        expect(project.config).to eql({"key" => "value"})
+      end
+    end
+
+    context 'when config_file is not present' do
+      it 'config is an empty hash' do
+        git_command = ["git", "clone", "--branch=branch", "--depth=1", "repo", "."]
+        expect(ChatopsDeployer::Command).to receive(:run)
+          .with(command: git_command, log_file: log_file) do
+          double(:command, success?: true)
+        end
+        Dir.chdir project.directory
+        project.fetch_repo
+        expect(project.config).to eql({})
+      end
+    end
+  end
+
+  describe '#copy_files_from_deployer' do
+    let(:source_directory) { File.join(ChatopsDeployer::COPY_SOURCE_DIR, 'app_name', 'staging') }
+    let(:source_path) { File.join(source_directory, 'sample.txt') }
+    before do
+      FileUtils.mkdir_p source_directory
+      File.open(source_path, 'w')
+
+      File.open('chatops_deployer.yml', 'w') do |f|
+        f.puts config
+      end
+      Dir.chdir project.directory
+      File.open('chatops_deployer.yml', 'w') do |f|
+        f.puts config
+      end
+      git_command = ["git", "pull", "origin", "branch"]
+      expect(ChatopsDeployer::Command).to receive(:run)
+        .with(command: git_command, log_file: log_file) do
+        double(:command, success?: true)
+      end
+      project.fetch_repo
+    end
+
+    context 'when destination path is not provided explicitly' do
+      let(:config) do
+        <<-EOM
+          copy:
+            - "app_name/staging/sample.txt"
+        EOM
+      end
+
+      it 'uses the source filename as the destination' do
+        project.copy_files_from_deployer
+        expect(FileUtils.compare_file(source_path, 'sample.txt')).to be_truthy
+      end
+    end
+
+    context 'when destination path is provided explicitly' do
+      let(:config) do
+        <<-EOM
+          copy:
+            - "app_name/staging/sample.txt:sample1.txt"
+        EOM
+      end
+
+      it 'uses the source filename as the destination' do
+        project.copy_files_from_deployer
+        expect(FileUtils.compare_file(source_path, 'sample1.txt')).to be_truthy
       end
     end
   end

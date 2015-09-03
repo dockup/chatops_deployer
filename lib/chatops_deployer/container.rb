@@ -8,8 +8,9 @@ module ChatopsDeployer
     class Error < ChatopsDeployer::Error; end
 
     attr_reader :urls
-    def initialize(sha1)
-      @sha1 = sha1
+    def initialize(project)
+      @sha1 = project.sha1
+      @config = project.config
       @urls = {}
       @first_run = false
     end
@@ -54,8 +55,7 @@ module ChatopsDeployer
     end
 
     def docker_compose_run_commands
-      @chatops_config = File.exists?('chatops_deployer.yml') ? YAML.load_file('chatops_deployer.yml') : {}
-      if service_commands = @chatops_config['commands']
+      if service_commands = @config['commands']
         service_commands.each do |service, commands_hash|
           commands = if @first_run
             commands_hash['first_run'] || []
@@ -81,9 +81,11 @@ module ChatopsDeployer
         raise_error('docker-compose restart failed') unless docker_compose.success?
       end
 
-      if expose = @chatops_config['expose']
-        expose.each do |service, port|
-          @urls[service] = get_url_on_vm(service, port)
+      if expose = @config['expose']
+        expose.each do |service, ports|
+          @urls[service] = ports.collect do |port|
+            get_url_on_vm(service, port)
+          end
         end
       end
     end

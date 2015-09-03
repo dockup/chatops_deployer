@@ -3,17 +3,19 @@ require 'chatops_deployer/error'
 require 'chatops_deployer/command'
 require 'digest/sha1'
 require 'fileutils'
+require 'yaml'
 
 module ChatopsDeployer
   class Project
     class Error < ChatopsDeployer::Error; end
 
-    attr_reader :sha1, :directory
-    def initialize(repository, branch)
+    attr_reader :sha1, :directory, :config
+    def initialize(repository, branch, config_file='chatops_deployer.yml')
       @sha1 = Digest::SHA1.hexdigest(repository + branch)
       @directory = "#{WORKSPACE}/#{@sha1}"
       @repository = repository
       @branch = branch
+      @config_file = config_file
       FileUtils.mkdir_p @directory
     end
 
@@ -30,6 +32,18 @@ module ChatopsDeployer
         git_pull = Command.run(command: ['git', 'pull', 'origin', @branch], log_file: File.join(LOG_DIR, @sha1))
         unless git_pull.success?
           raise_error("Cannot pull git repository: #{@repository}, branch: #{@branch}")
+        end
+      end
+      @config = File.exists?(@config_file) ? YAML.load_file(@config_file) : {}
+    end
+
+    def copy_files_from_deployer
+      if copy_list = @config['copy']
+        copy_list.each do |copy_string|
+          source, destination = copy_string.split(':')
+          destination ||= File.basename source
+          source = File.join(COPY_SOURCE_DIR, source)
+          FileUtils.cp source, destination
         end
       end
     end

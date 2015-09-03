@@ -3,7 +3,8 @@ require 'fileutils'
 
 describe ChatopsDeployer::NginxConfig do
   let(:sha1) { 'fake_sha1' }
-  let(:nginx_config) { ChatopsDeployer::NginxConfig.new(sha1) }
+  let(:project) { instance_double('Project', sha1: 'fake_sha1') }
+  let(:nginx_config) { ChatopsDeployer::NginxConfig.new(project) }
 
   before do
     FileUtils.mkdir_p ChatopsDeployer::NGINX_SITES_ENABLED_DIR
@@ -46,7 +47,7 @@ describe ChatopsDeployer::NginxConfig do
   describe '#add_urls' do
     context 'when host is nil' do
       it 'raises error' do
-        expect { nginx_config.add_urls({web: nil}) }
+        expect { nginx_config.add_urls({web: [nil]}) }
           .to raise_error ChatopsDeployer::NginxConfig::Error,
             'fake_sha1: Nginx error: Cannot add nginx config because host is nil'
       end
@@ -59,7 +60,7 @@ describe ChatopsDeployer::NginxConfig do
         expect(Haikunator).to receive(:haikunate).and_return('shy-surf-3571')
         expect(Haikunator).to receive(:haikunate).and_return('long-flower-2811')
 
-        nginx_config.add_urls({web: 'fake_host', admin: 'fake_host2'})
+        nginx_config.add_urls({web: ['fake_host'], admin: ['fake_host2']})
 
         expect(File.read('/etc/nginx/sites-enabled/fake_sha1')).to eql <<-EOM
         server{

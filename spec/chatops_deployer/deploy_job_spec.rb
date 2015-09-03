@@ -20,17 +20,18 @@ describe ChatopsDeployer::DeployJob do
       let(:callback_url) { 'http://example.com/callback' }
 
       it 'should deploy the branch and trigger callback' do
-        expect(ChatopsDeployer::Project).to receive(:new).with(repo, branch)
+        expect(ChatopsDeployer::Project).to receive(:new).with(repo, branch, nil)
           .and_return project
-        expect(ChatopsDeployer::NginxConfig).to receive(:new).with('fake_sha1')
+        expect(ChatopsDeployer::NginxConfig).to receive(:new).with(project)
           .and_return nginx_config
-        expect(ChatopsDeployer::Container).to receive(:new).with('fake_sha1')
+        expect(ChatopsDeployer::Container).to receive(:new).with(project)
           .and_return container
-        expect(project).to receive(:sha1).at_least(:once).and_return 'fake_sha1'
+        #expect(project).to receive(:sha1).at_least(:once).and_return 'fake_sha1'
         expect(project).to receive(:fetch_repo)
+        expect(project).to receive(:copy_files_from_deployer)
         expect(project).to receive(:directory).and_return('/tmp')
         expect(container).to receive(:build)
-        urls = {'web' => '192.168.0.1:3000'}
+        urls = {'web' => ['192.168.0.1:3000']}
         exposed_urls = {'web' => 'http://famous-five-17.example.com'}
         expect(container).to receive(:urls).at_least(:once).and_return(urls)
         expect(nginx_config).to receive(:urls).at_least(:once).and_return(exposed_urls)
@@ -59,7 +60,7 @@ describe ChatopsDeployer::DeployJob do
       let(:callback_url) { 'http://example.com/callback' }
 
       it 'trigger callback with failure status and reason' do
-        expect(ChatopsDeployer::Project).to receive(:new).with(repo, branch)
+        expect(ChatopsDeployer::Project).to receive(:new).with(repo, branch, nil)
           .and_return project
         expect(project).to receive(:sha1).at_least(:once).and_return 'fake_sha1'
 

@@ -2,11 +2,18 @@ require 'sinatra'
 require 'net/http'
 require 'json'
 require 'chatops_deployer/deploy_job'
+require 'fileutils'
 
 module ChatopsDeployer
   class App < Sinatra::Base
     set :port, 8000
     set :bind, '0.0.0.0'
+
+    configure do
+      [WORKSPACE, LOG_DIR, COPY_SOURCE_DIR].each do |dir|
+        FileUtils.mkdir_p dir unless Dir.exists?(dir)
+      end
+    end
 
     post '/deploy' do
       content_type :json

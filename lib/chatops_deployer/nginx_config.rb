@@ -10,10 +10,10 @@ module ChatopsDeployer
 
     class Error < ChatopsDeployer::Error; end
 
-    def initialize(sha1)
-      @sha1 = sha1
+    def initialize(project)
+      @sha1 = project.sha1
       check_sites_enabled_dir_exists!
-      @config_path = File.join NGINX_SITES_ENABLED_DIR, sha1
+      @config_path = File.join NGINX_SITES_ENABLED_DIR, @sha1
       @urls = {}
     end
 
@@ -21,12 +21,14 @@ module ChatopsDeployer
       File.exists? @config_path
     end
 
-    def add_urls(urls)
-      return if urls.nil?
+    def add_urls(service_urls)
+      return if service_urls.nil?
       remove if exists?
 
-      urls.each do |service, url|
-        @urls[service] = add(url)
+      service_urls.each do |service, urls|
+        @urls[service] = Array(urls).collect do |url|
+          add(url)
+        end
       end
       puts "Reloading nginx"
       Command.run(command: 'service nginx reload', log_file: File.join(LOG_DIR, @sha1))
