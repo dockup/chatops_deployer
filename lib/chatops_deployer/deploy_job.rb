@@ -9,7 +9,7 @@ module ChatopsDeployer
   class DeployJob
     include SuckerPunch::Job
 
-    def perform(repository:, branch:, config_file: nil,callback_url:)
+    def perform(repository:, branch: 'master', config_file: 'chatops_deployer.yml', callback_url:)
       @branch = branch
       @project = Project.new(repository, branch, config_file)
       @nginx_config = NginxConfig.new(@project)

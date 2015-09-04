@@ -12,7 +12,7 @@ module ChatopsDeployer
 
     attr_reader :sha1, :directory, :config
     attr_accessor :env
-    def initialize(repository, branch, config_file='chatops_deployer.yml')
+    def initialize(repository, branch, config_file)
       @sha1 = Digest::SHA1.hexdigest(repository + branch)
       @directory = "#{WORKSPACE}/#{@sha1}"
       @repository = repository
