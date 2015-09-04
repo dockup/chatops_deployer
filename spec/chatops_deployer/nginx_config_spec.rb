@@ -45,22 +45,28 @@ describe ChatopsDeployer::NginxConfig do
   end
 
   describe '#add_urls' do
-    context 'when host is nil' do
+    context 'when exposed urls are not loaded' do
       it 'raises error' do
-        expect { nginx_config.add_urls({web: [nil]}) }
+        expect { nginx_config.add_urls({"web" => ['1.2.3.4', '3000']}) }
           .to raise_error ChatopsDeployer::NginxConfig::Error,
-            'fake_sha1: Nginx error: Cannot add nginx config because host is nil'
+            'fake_sha1: Nginx error: Cannot add nginx config because exposed ports could not be read from chatops_deployer.yml'
       end
     end
 
-    context 'when host is present' do
+    context 'when exported urls are loaded' do
+      before do
+        expect(project).to receive(:env).and_return({})
+        expect(nginx_config).to receive(:service_ports_from_config).and_return({ 'web' => ['3000', '3001'], 'admin' => ['8080']})
+        expect(Haikunator).to receive(:haikunate).and_return('shy-surf-3571')
+        expect(Haikunator).to receive(:haikunate).and_return('long-flower-2811')
+        expect(Haikunator).to receive(:haikunate).and_return('crimson-meadow-2')
+        nginx_config.prepare_urls
+      end
       it 'creates an nginx config' do
         expect(ChatopsDeployer::Command).to receive(:run)
           .with(command: 'service nginx reload', log_file: '/var/log/chatops_deployer/fake_sha1')
-        expect(Haikunator).to receive(:haikunate).and_return('shy-surf-3571')
-        expect(Haikunator).to receive(:haikunate).and_return('long-flower-2811')
 
-        nginx_config.add_urls({web: ['fake_host'], admin: ['fake_host2']})
+        nginx_config.add_urls({"web" => [['fake_host', '3000'], ['fake_host', '3001']], "admin" => [['fake_host2','8080']]})
 
         expect(File.read('/etc/nginx/sites-enabled/fake_sha1')).to eql <<-EOM
         server{
@@ -68,11 +74,11 @@ describe ChatopsDeployer::NginxConfig do
             server_name shy-surf-3571.127.0.0.1.xip.io;
 
             # host error and access log
-            access_log /var/log/nginx/shy-surf-3571.access.log;
-            error_log /var/log/nginx/shy-surf-3571.error.log;
+            access_log /var/log/nginx/shy-surf-3571.127.0.0.1.xip.io.access.log;
+            error_log /var/log/nginx/shy-surf-3571.127.0.0.1.xip.io.error.log;
 
             location / {
-                proxy_pass http://fake_host;
+                proxy_pass http://fake_host:3000;
             }
         }
         server{
@@ -80,11 +86,23 @@ describe ChatopsDeployer::NginxConfig do
             server_name long-flower-2811.127.0.0.1.xip.io;
 
             # host error and access log
-            access_log /var/log/nginx/long-flower-2811.access.log;
-            error_log /var/log/nginx/long-flower-2811.error.log;
+            access_log /var/log/nginx/long-flower-2811.127.0.0.1.xip.io.access.log;
+            error_log /var/log/nginx/long-flower-2811.127.0.0.1.xip.io.error.log;
 
             location / {
-                proxy_pass http://fake_host2;
+                proxy_pass http://fake_host:3001;
+            }
+        }
+        server{
+            listen 80;
+            server_name crimson-meadow-2.127.0.0.1.xip.io;
+
+            # host error and access log
+            access_log /var/log/nginx/crimson-meadow-2.127.0.0.1.xip.io.access.log;
+            error_log /var/log/nginx/crimson-meadow-2.127.0.0.1.xip.io.error.log;
+
+            location / {
+                proxy_pass http://fake_host2:8080;
             }
         }
       EOM

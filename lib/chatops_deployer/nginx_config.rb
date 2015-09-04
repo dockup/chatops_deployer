@@ -12,6 +12,7 @@ module ChatopsDeployer
 
     def initialize(project)
       @sha1 = project.sha1
+      @project = project
       check_sites_enabled_dir_exists!
       @config_path = File.join NGINX_SITES_ENABLED_DIR, @sha1
       @urls = {}
@@ -21,13 +22,15 @@ module ChatopsDeployer
       File.exists? @config_path
     end
 
+    # service_urls is an array in the format:
+    # {"web" => [["10.1.1.2", "3000"],["10.1.1.2", "4000"]] }
     def add_urls(service_urls)
       return if service_urls.nil?
       remove if exists?
 
-      service_urls.each do |service, urls|
-        @urls[service] = Array(urls).collect do |url|
-          add(url)
+      service_urls.each do |service, internal_urls|
+        Array(internal_urls).each do |internal_url|
+          expose(service, internal_url)
         end
       end
       puts "Reloading nginx"
@@ -40,6 +43,26 @@ module ChatopsDeployer
       system('service nginx reload')
     end
 
+    def readable_urls
+      urls = {}
+      @urls.each do |service, port_exposed_urls|
+        urls[service] = port_exposed_urls.collect do |port, exposed_url|
+          exposed_url
+        end
+      end
+      urls.to_json
+    end
+
+    def prepare_urls
+      service_ports_from_config.each do |service, ports|
+        @urls[service] = {}
+        ports.each do |port|
+          @urls[service][port] = generate_haikunated_url
+        end
+      end
+      @project.env['urls'] = @urls
+    end
+
     private
 
     def check_sites_enabled_dir_exists!
@@ -48,21 +71,37 @@ module ChatopsDeployer
       end
     end
 
-    def add(host)
-      raise_error("Cannot add nginx config because host is nil") if host.nil?
-      @haiku = Haikunator.haikunate
-      exposed_host = "#{@haiku}.#{DEPLOYER_HOST}"
+    def service_ports_from_config
+      @project.config['expose'] || {}
+    end
+
+    def generate_haikunated_url
+      haiku = Haikunator.haikunate
+      "#{haiku}.#{DEPLOYER_HOST}"
+    end
+
+    # service => name of service , example: "web"
+    # internal_url => a pair of ip and port, example: ["10.1.1.2", "3000"]
+    def expose(service, internal_url)
+      raise_error("Cannot add nginx config because host is nil") if internal_url.nil? || internal_url.empty?
+      ip = internal_url[0]
+      port = internal_url[1]
+      begin
+        exposed_url = @urls[service][port]
+      rescue
+        raise_error("Cannot add nginx config because exposed ports could not be read from chatops_deployer.yml")
+      end
       contents = <<-EOM
         server{
             listen 80;
-            server_name #{exposed_host};
+            server_name #{exposed_url};
 
             # host error and access log
-            access_log /var/log/nginx/#{@haiku}.access.log;
-            error_log /var/log/nginx/#{@haiku}.error.log;
+            access_log /var/log/nginx/#{exposed_url}.access.log;
+            error_log /var/log/nginx/#{exposed_url}.error.log;
 
             location / {
-                proxy_pass http://#{host};
+                proxy_pass http://#{ip}:#{port};
             }
         }
       EOM
@@ -70,7 +109,6 @@ module ChatopsDeployer
       File.open(@config_path, 'a') do |file|
         file << contents
       end
-      "http://#{exposed_host}"
     end
 
     def raise_error(message)

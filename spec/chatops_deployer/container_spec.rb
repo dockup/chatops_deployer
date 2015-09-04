@@ -78,7 +78,7 @@ describe ChatopsDeployer::Container do
 
       expect(ENV['KEY1']).to eql 'VALUE1'
       expect(ENV['KEY2']).to eql 'VALUE2'
-      expect(container.urls).to eql({'web' => ['1.2.3.4:3001']})
+      expect(container.urls).to eql({'web' => [['1.2.3.4','3001']]})
     end
 
     context 'next runs' do
@@ -97,7 +97,7 @@ describe ChatopsDeployer::Container do
 
         expect(ENV['KEY1']).to eql 'VALUE1'
         expect(ENV['KEY2']).to eql 'VALUE2'
-        expect(container.urls).to eql({'web' => ['1.2.3.4:3001']})
+        expect(container.urls).to eql({'web' => [['1.2.3.4','3001']]})
       end
     end
   end

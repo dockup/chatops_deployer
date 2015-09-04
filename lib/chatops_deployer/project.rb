@@ -1,6 +1,7 @@
 require 'chatops_deployer/globals'
 require 'chatops_deployer/error'
 require 'chatops_deployer/command'
+require 'chatops_deployer/template'
 require 'digest/sha1'
 require 'fileutils'
 require 'yaml'
@@ -10,12 +11,14 @@ module ChatopsDeployer
     class Error < ChatopsDeployer::Error; end
 
     attr_reader :sha1, :directory, :config
+    attr_accessor :env
     def initialize(repository, branch, config_file='chatops_deployer.yml')
       @sha1 = Digest::SHA1.hexdigest(repository + branch)
       @directory = "#{WORKSPACE}/#{@sha1}"
       @repository = repository
       @branch = branch
       @config_file = config_file
+      @env = {}
       FileUtils.mkdir_p @directory
     end
 
@@ -41,9 +44,15 @@ module ChatopsDeployer
       if copy_list = @config['copy']
         copy_list.each do |copy_string|
           source, destination = copy_string.split(':')
-          destination ||= File.basename source
           source = File.join(COPY_SOURCE_DIR, source)
-          FileUtils.cp source, destination
+          if File.extname(source) == '.erb'
+            destination ||= File.basename(source, '.erb')
+            Template.new(source).inject(@env).write(destination)
+          else
+            destination ||= File.basename source
+            FileUtils.cp source, destination
+            File.read(destination)
+          end
         end
       end
     end

@@ -17,6 +17,7 @@ module ChatopsDeployer
 
       Dir.chdir(@project.directory) do
         @project.fetch_repo
+        @nginx_config.prepare_urls
         @project.copy_files_from_deployer
         @container.build
       end
@@ -31,7 +32,7 @@ module ChatopsDeployer
     def callback(callback_url, status, reason=nil)
       body = {status: status, branch: @branch}
       if status == :deployment_success
-        body[:url] = @nginx_config.urls
+        body[:urls] = @nginx_config.readable_urls
         puts "Succesfully deployed #{@branch}"
       else
         body[:reason] = reason

@@ -104,7 +104,7 @@ module ChatopsDeployer
       docker_port = Command.run(command: "docker-compose port #{service} #{port}", log_file: File.join(LOG_DIR,@sha1))
       raise_error("Cannot find exposed port for #{port} in service #{service}") unless docker_port.success?
       port = docker_port.output.chomp.split(':').last
-      "#{@ip}:#{port}"
+      [@ip, port]
     end
 
     def raise_error(message)

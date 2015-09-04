@@ -84,13 +84,13 @@ describe ChatopsDeployer::Project do
   describe '#copy_files_from_deployer' do
     let(:source_directory) { File.join(ChatopsDeployer::COPY_SOURCE_DIR, 'app_name', 'staging') }
     let(:source_path) { File.join(source_directory, 'sample.txt') }
+    let(:source_content) { "sample" }
     before do
       FileUtils.mkdir_p source_directory
-      File.open(source_path, 'w')
-
-      File.open('chatops_deployer.yml', 'w') do |f|
-        f.puts config
+      File.open(source_path, 'w') do |f|
+        f.puts source_content
       end
+
       Dir.chdir project.directory
       File.open('chatops_deployer.yml', 'w') do |f|
         f.puts config
@@ -113,7 +113,7 @@ describe ChatopsDeployer::Project do
 
       it 'uses the source filename as the destination' do
         project.copy_files_from_deployer
-        expect(FileUtils.compare_file(source_path, 'sample.txt')).to be_truthy
+        expect(File.read('sample.txt')).to eql File.read(source_path)
       end
     end
 
@@ -127,7 +127,24 @@ describe ChatopsDeployer::Project do
 
       it 'uses the source filename as the destination' do
         project.copy_files_from_deployer
-        expect(FileUtils.compare_file(source_path, 'sample1.txt')).to be_truthy
+        expect(File.read('sample1.txt')).to eql File.read(source_path)
+      end
+    end
+
+    context 'when source is an .erb file' do
+      let(:source_path) { File.join(source_directory, 'sample.txt.erb') }
+      let(:source_content) { "Hello <%= env['name'] %>" }
+
+      let(:config) do
+        <<-EOM
+          copy:
+            - "app_name/staging/sample.txt.erb"
+        EOM
+      end
+      it 'compiles the ERB tags' do
+        project.env = {'name' => 'Rosemary'}
+        project.copy_files_from_deployer
+        expect(File.read('sample.txt')).to eql "Hello Rosemary\n"
       end
     end
   end

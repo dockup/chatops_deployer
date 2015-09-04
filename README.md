@@ -33,6 +33,93 @@ And run the server as the root user:
 
     $ chatops_deployer
 
+### Configuration
+
+To configure an app for deployment using chatops_deployer API, you need to follow the following steps:
+
+#### 1. Dockerize the app
+
+Add a `docker-compose.yml` file inside the root of the app that can run the app
+and the dependent services as docker containers using the command `docker-compose up`.
+Refer [the docker compose docs](https://docs.docker.com/compose/) to learn how
+to prepare this file for your app.
+
+#### 2. Add chatops_deployer.yml
+
+Add a `chatops_deployer.yml` file inside the root of the app.
+This file will tell `chatops_deployer` about ports to expose as haikunated
+subdomains, commands to run after cloning the repository and also if any files
+need to be copied into the project after cloning it for any runtime configuration.
+
+Here's an example `chatops_deployer.yml` :
+
+```yaml
+# `expose` is a hash in the format <service>:<array of ports>
+# <service> : Service name as specified in docker-compose.yml
+# <array of ports> : Ports on the container which should be exposed as subdomains
+expose:
+  web: [3000]
+
+# `commands` is a hash in the format <service>: {first_run: <array of commands>, next_runs: <array of commands>}
+# Commands under first_run are run only once, when the container is run for the first time.
+# Commands under next_runs are for all subsequent deployments in the same container, but not
+# run on the first deployment.
+# Commands are run in the same order as they appear in the list.
+commands:
+  web:
+    first_run:
+      - bundle exec rake db:create
+      - bundle exec rake db:schema:load
+    next_runs:
+      - bundle exec rake db:migrate
+
+# `copy` is an array of strings in the format "<source>:<destination>"
+# source is the path to a file relative to /etc/chatops_deployer/copy in the deployer.
+# destination is the path relative to chatops_deployer.yml to which the source file
+# should be copied. Copying of files happen soon after the repository is cloned
+# and before any docker containers are created.
+# If the source file ends with .erb, it's treated as an ERB template and gets
+# processed. ERB templates have access to an `env` variable which holds the
+# exposed urls. For example:
+# "<%= env['urls']['web']['3000'] %>" will be replaced with "crimson-cloud-12.example.com"
+copy:
+  - "myapp_development.env.erb:config.env"
+```
+
+### Deployment
+
+To deploy an app using `chatops_deployer`, send a POST request to `chatops_deployer`
+like so :
+
+```
+curl -XPOST  -d '{"repository":"https://github.com/user/app.git","branch":"master","callback_url":"example.com/deployment_status"}' -H "Content-Type: application/json" localhost:8000/deploy
+```
+
+You can see that the request accepts a `callback_url`. chatops_deployer will
+POST to this callback_url with the following data:
+
+1. Success callback
+
+Example:
+```json
+{
+  status: 'deployment_success',
+  branch: 'master',
+  urls: { web: ['misty-meadows-123.deployer-host.com'] }
+}
+```
+
+2. Failure callback
+
+Example:
+```json
+{
+  status: 'deployment_failure',
+  branch: 'master',
+  reason: 'f052f10148bd290321b84f44: Nginx error: Config directory /etc/nginx/sites-enabled does not exist'
+}
+```
+
 ## Development
 
 After checking out the repo, run `bin/setup` to install dependencies. Then, run `rake` to run the tests. You can also run `bin/console` for an interactive prompt that will allow you to experiment.
