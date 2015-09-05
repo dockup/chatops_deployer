@@ -20,7 +20,7 @@ describe ChatopsDeployer::DeployJob do
       let(:callback_url) { 'http://example.com/callback' }
 
       it 'should deploy the branch and trigger callback' do
-        expect(ChatopsDeployer::Project).to receive(:new).with(repo, branch, nil)
+        expect(ChatopsDeployer::Project).to receive(:new).with(repo, branch, 'chatops_deployer.yml')
           .and_return project
         expect(ChatopsDeployer::NginxConfig).to receive(:new).with(project)
           .and_return nginx_config
@@ -59,7 +59,7 @@ describe ChatopsDeployer::DeployJob do
       let(:callback_url) { 'http://example.com/callback' }
 
       it 'trigger callback with failure status and reason' do
-        expect(ChatopsDeployer::Project).to receive(:new).with(repo, branch, nil)
+        expect(ChatopsDeployer::Project).to receive(:new).with(repo, branch, 'chatops_deployer.yml')
           .and_return project
         expect(project).to receive(:sha1).at_least(:once).and_return 'fake_sha1'
 
