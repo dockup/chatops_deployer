@@ -31,5 +31,9 @@ module ChatopsDeployer
     def logger
       self.class.logger
     end
+
+    def logger=(logger)
+      self.class.logger = logger
+    end
   end
 end

@@ -2,7 +2,6 @@ require 'chatops_deployer/project'
 
 describe ChatopsDeployer::Project do
   let(:project) { ChatopsDeployer::Project.new('repo', 'branch') }
-  let(:log_file) { "/var/log/chatops_deployer/#{project.sha1}" }
 
   describe "initialize" do
     it 'creates the project directory' do
@@ -24,7 +23,7 @@ describe ChatopsDeployer::Project do
       it 'clones the git repo' do
         git_command = ["git", "clone", "--branch=branch", "--depth=1", "repo", "."]
         expect(ChatopsDeployer::Command).to receive(:run)
-          .with(command: git_command, log_file: log_file) do
+          .with(command: git_command, logger: project.logger) do
           double(:command, success?: true)
         end
         Dir.chdir project.directory
@@ -40,7 +39,7 @@ describe ChatopsDeployer::Project do
         Dir.chdir project.directory
         git_command = ["git", "pull", "origin", "branch"]
         expect(ChatopsDeployer::Command).to receive(:run)
-          .with(command: git_command, log_file: log_file) do
+          .with(command: git_command, logger: project.logger) do
           double(:command, success?: true)
         end
         project.fetch_repo
@@ -59,7 +58,7 @@ describe ChatopsDeployer::Project do
       it 'loads the YML file into config' do
         git_command = ["git", "pull", "origin", "branch"]
         expect(ChatopsDeployer::Command).to receive(:run)
-          .with(command: git_command, log_file: log_file) do
+          .with(command: git_command, logger: project.logger) do
           double(:command, success?: true)
         end
         project.fetch_repo
@@ -71,7 +70,7 @@ describe ChatopsDeployer::Project do
       it 'config is an empty hash' do
         git_command = ["git", "clone", "--branch=branch", "--depth=1", "repo", "."]
         expect(ChatopsDeployer::Command).to receive(:run)
-          .with(command: git_command, log_file: log_file) do
+          .with(command: git_command, logger: project.logger) do
           double(:command, success?: true)
         end
         Dir.chdir project.directory
@@ -97,7 +96,7 @@ describe ChatopsDeployer::Project do
       end
       git_command = ["git", "pull", "origin", "branch"]
       expect(ChatopsDeployer::Command).to receive(:run)
-        .with(command: git_command, log_file: log_file) do
+        .with(command: git_command, logger: project.logger) do
         double(:command, success?: true)
       end
       project.fetch_repo

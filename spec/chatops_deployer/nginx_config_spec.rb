@@ -19,7 +19,7 @@ describe ChatopsDeployer::NginxConfig do
       it "raises error" do
         expect{ subject }
           .to raise_error ChatopsDeployer::NginxConfig::Error,
-            'fake_sha1: Nginx error: Config directory /etc/nginx/sites-enabled does not exist'
+            'Nginx error: Config directory /etc/nginx/sites-enabled does not exist'
       end
     end
 
@@ -49,7 +49,7 @@ describe ChatopsDeployer::NginxConfig do
       it 'raises error' do
         expect { nginx_config.add_urls({"web" => ['1.2.3.4', '3000']}) }
           .to raise_error ChatopsDeployer::NginxConfig::Error,
-            'fake_sha1: Nginx error: Cannot add nginx config because exposed ports could not be read from chatops_deployer.yml'
+            'Nginx error: Cannot add nginx config because exposed ports could not be read from chatops_deployer.yml'
       end
     end
 
@@ -64,7 +64,7 @@ describe ChatopsDeployer::NginxConfig do
       end
       it 'creates an nginx config' do
         expect(ChatopsDeployer::Command).to receive(:run)
-          .with(command: 'service nginx reload', log_file: '/var/log/chatops_deployer/fake_sha1')
+          .with(command: 'service nginx reload', logger: nginx_config.logger)
 
         nginx_config.add_urls({"web" => [['fake_host', '3000'], ['fake_host', '3001']], "admin" => [['fake_host2','8080']]})
 

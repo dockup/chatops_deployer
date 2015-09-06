@@ -10,7 +10,7 @@ module ChatopsDeployer
     set :bind, '0.0.0.0'
 
     configure do
-      [WORKSPACE, LOG_DIR, COPY_SOURCE_DIR].each do |dir|
+      [WORKSPACE, COPY_SOURCE_DIR].each do |dir|
         FileUtils.mkdir_p dir unless Dir.exists?(dir)
       end
     end
