@@ -3,9 +3,11 @@ require 'chatops_deployer/error'
 require 'chatops_deployer/command'
 require 'haikunator'
 require 'fileutils'
+require 'chatops_deployer/logger'
 
 module ChatopsDeployer
   class NginxConfig
+    include Logger
     attr_reader :urls
 
     class Error < ChatopsDeployer::Error; end
@@ -33,12 +35,13 @@ module ChatopsDeployer
           expose(service, internal_url)
         end
       end
-      puts "Reloading nginx"
-      Command.run(command: 'service nginx reload', log_file: File.join(LOG_DIR, @sha1))
+      logger.info "Reloading nginx"
+      Command.run(command: 'service nginx reload', logger: logger)
+      #Command.run 'service nginx reload'
     end
 
     def remove
-      puts "Removing nginx config"
+      logger.info "Removing nginx config"
       FileUtils.rm @config_path
       system('service nginx reload')
     end
@@ -105,14 +108,14 @@ module ChatopsDeployer
             }
         }
       EOM
-      puts "Adding nginx config at #{NGINX_SITES_ENABLED_DIR}/#{@sha1}"
+      logger.info "Adding nginx config at #{NGINX_SITES_ENABLED_DIR}/#{@sha1}"
       File.open(@config_path, 'a') do |file|
         file << contents
       end
     end
 
     def raise_error(message)
-      raise Error, "#{@sha1}: Nginx error: #{message}"
+      raise Error, "Nginx error: #{message}"
     end
   end
 end
