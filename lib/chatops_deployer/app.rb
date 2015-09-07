@@ -20,6 +20,7 @@ module ChatopsDeployer
       json = JSON.parse(request.body.read)
 
       DeployJob.new.async.perform(repository: json['repository'], branch: json['branch'], callback_url: json['callback_url'])
+      { log_url: LOG_URL }.to_json
     end
 
     post '/destroy' do
