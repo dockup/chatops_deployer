@@ -12,12 +12,13 @@ module ChatopsDeployer
     attr_reader :urls
     def initialize(project)
       @sha1 = project.sha1
-      @config = project.config
       @urls = {}
       @first_run = false
+      @project = project
     end
 
     def build
+      @config = @project.config
       create_docker_machine
       setup_docker_environment
       docker_compose_run_commands
