@@ -1,37 +1,33 @@
+require 'logger'
 require 'open3'
 
 module ChatopsDeployer
   class Command
-    def self.run(command: "", log_file: nil)
-      new.run(command, log_file)
+    attr_reader :output
+
+    def self.run(command: "", logger: ::Logger.new(STDOUT))
+      new.run(command, logger)
     end
 
-    def run(command, log_file)
-      puts "Running command: #{command.inspect}"
-      @out = []
+    def initialize
+      @output = ""
+      @status = nil
+    end
+
+    def run(command, logger)
+      logger.info "Running command: #{command.inspect}"
       Open3.popen2e(*(Array(command))) do |_, out_err, thread|
-        f = log_file.nil? ? nil : File.open(log_file, 'a')
         out_err.each_line do |line|
-          puts line
-          @out << line
-          if f
-            f.write("Running command: #{command.inspect}")
-            f.write(line)
-            f.flush
-          end
+          logger.info line
+          @output << line
         end
         @status = thread.value
-        f.close
       end
       self
     end
 
-    def output
-      @out.join("\n")
-    end
-
     def success?
-      @status.success?
+      @status && @status.success?
     end
   end
 end

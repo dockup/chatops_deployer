@@ -7,6 +7,7 @@ describe ChatopsDeployer::DeployJob do
 
   before do
     FileUtils.mkdir_p '/etc/nginx/sites-available'
+    FileUtils.mkdir_p '/var/log'
   end
 
   describe '#perform' do
@@ -20,21 +21,25 @@ describe ChatopsDeployer::DeployJob do
       let(:callback_url) { 'http://example.com/callback' }
 
       it 'should deploy the branch and trigger callback' do
-        expect(ChatopsDeployer::Project).to receive(:new).with(repo, branch)
+        expect(ChatopsDeployer::Project).to receive(:new).with(repo, branch, 'chatops_deployer.yml')
           .and_return project
-        expect(ChatopsDeployer::NginxConfig).to receive(:new).with('fake_sha1')
+        expect(ChatopsDeployer::NginxConfig).to receive(:new).with(project)
           .and_return nginx_config
-        expect(ChatopsDeployer::Container).to receive(:new).with('fake_sha1')
+        expect(ChatopsDeployer::Container).to receive(:new).with(project)
           .and_return container
-        expect(project).to receive(:sha1).at_least(:once).and_return 'fake_sha1'
+        expect(project).to receive(:logger=)
+        expect(project).to receive(:sha1).and_return 'fake_sha1'
         expect(project).to receive(:fetch_repo)
+        expect(project).to receive(:copy_files_from_deployer)
         expect(project).to receive(:directory).and_return('/tmp')
         expect(container).to receive(:build)
-        urls = {'web' => '192.168.0.1:3000'}
-        exposed_urls = {'web' => 'http://famous-five-17.example.com'}
+        urls = {'web' => ['192.168.0.1:3000']}
+        exposed_urls = {'web' => ['http://famous-five-17.example.com']}
+        expect(container).to receive(:logger=)
         expect(container).to receive(:urls).at_least(:once).and_return(urls)
-        expect(nginx_config).to receive(:urls).at_least(:once).and_return(exposed_urls)
-
+        expect(nginx_config).to receive(:logger=)
+        expect(nginx_config).to receive(:prepare_urls)
+        expect(nginx_config).to receive(:readable_urls).and_return(exposed_urls.to_json)
         expect(nginx_config).to receive(:add_urls).with urls
 
         stub_request(:post, callback_url)
@@ -42,7 +47,7 @@ describe ChatopsDeployer::DeployJob do
             body: {
               status: 'deployment_success',
               branch: branch,
-              url: {'web' => 'http://famous-five-17.example.com'}
+              urls: exposed_urls.to_json
             }.to_json,
             headers: {
               'Content-Type' => 'application/json'
@@ -59,7 +64,7 @@ describe ChatopsDeployer::DeployJob do
       let(:callback_url) { 'http://example.com/callback' }
 
       it 'trigger callback with failure status and reason' do
-        expect(ChatopsDeployer::Project).to receive(:new).with(repo, branch)
+        expect(ChatopsDeployer::Project).to receive(:new).with(repo, branch, 'chatops_deployer.yml')
           .and_return project
         expect(project).to receive(:sha1).at_least(:once).and_return 'fake_sha1'
 
@@ -68,7 +73,7 @@ describe ChatopsDeployer::DeployJob do
             body: {
               status: 'deployment_failure',
               branch: branch,
-              reason: "fake_sha1: Nginx error: Config directory /etc/nginx/sites-enabled does not exist"
+              reason: "Nginx error: Config directory /etc/nginx/sites-enabled does not exist"
             }.to_json,
             headers: {
               'Content-Type' => 'application/json'
