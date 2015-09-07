@@ -14,7 +14,8 @@ module ChatopsDeployer
     def perform(repository:, branch: 'master', config_file: 'chatops_deployer.yml', callback_url:)
       @branch = branch
       @project = Project.new(repository, branch, config_file)
-      @logger = ::Logger.new(MultiIO.new($stdout, File.open(LOG_FILE, 'a'))).tap do |l|
+      log_file = File.open(LOG_FILE, 'a')
+      @logger = ::Logger.new(MultiIO.new($stdout, log_file)).tap do |l|
         l.progname = @project.sha1
       end
 
