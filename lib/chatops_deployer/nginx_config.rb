@@ -52,7 +52,7 @@ module ChatopsDeployer
       urls = {}
       @urls.each do |service, port_exposed_urls|
         urls[service] = port_exposed_urls.collect do |port, exposed_url|
-          exposed_url
+          "http://#{exposed_url}"
         end
       end
       urls.to_json
