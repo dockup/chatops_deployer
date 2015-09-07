@@ -10,15 +10,17 @@ module ChatopsDeployer
     end
 
     def initialize
-      @output = nil
+      @output = ""
       @status = nil
     end
 
     def run(command, logger)
       logger.info "Running command: #{command.inspect}"
-      @out = []
       Open3.popen2e(*(Array(command))) do |_, out_err, thread|
-        @output = out_err.read
+        out_err.each_line do |line|
+          logger.info line
+          @output << line
+        end
         @status = thread.value
       end
       self
