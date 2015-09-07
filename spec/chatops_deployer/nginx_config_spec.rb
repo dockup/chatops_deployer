@@ -56,7 +56,7 @@ describe ChatopsDeployer::NginxConfig do
     context 'when exported urls are loaded' do
       before do
         expect(project).to receive(:env).and_return({})
-        expect(nginx_config).to receive(:service_ports_from_config).and_return({ 'web' => ['3000', '3001'], 'admin' => ['8080']})
+        expect(nginx_config).to receive(:service_ports_from_config).and_return({ 'web' => [3000, 3001], 'admin' => [8080]})
         expect(Haikunator).to receive(:haikunate).and_return('shy-surf-3571')
         expect(Haikunator).to receive(:haikunate).and_return('long-flower-2811')
         expect(Haikunator).to receive(:haikunate).and_return('crimson-meadow-2')
@@ -65,6 +65,7 @@ describe ChatopsDeployer::NginxConfig do
       it 'creates an nginx config' do
         expect(ChatopsDeployer::Command).to receive(:run)
           .with(command: 'service nginx reload', logger: nginx_config.logger)
+          .and_return(double(:command, success?: true))
 
         nginx_config.add_urls({"web" => [['fake_host', '3000'], ['fake_host', '3001']], "admin" => [['fake_host2','8080']]})
 

@@ -36,8 +36,10 @@ module ChatopsDeployer
         end
       end
       logger.info "Reloading nginx"
-      Command.run(command: 'service nginx reload', logger: logger)
-      #Command.run 'service nginx reload'
+      nginx_reload = Command.run(command: 'service nginx reload', logger: logger)
+      unless nginx_reload.success?
+        raise_error("Cannot reload nginx after adding config. Check #{NGINX_SITES_ENABLED_DIR}/#{@sha1} for errors")
+      end
     end
 
     def remove
@@ -60,7 +62,7 @@ module ChatopsDeployer
       service_ports_from_config.each do |service, ports|
         @urls[service] = {}
         ports.each do |port|
-          @urls[service][port] = generate_haikunated_url
+          @urls[service][port.to_s] = generate_haikunated_url
         end
       end
       @project.env['urls'] = @urls
