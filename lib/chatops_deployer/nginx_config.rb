@@ -59,13 +59,15 @@ module ChatopsDeployer
     end
 
     def prepare_urls
+      @project.env['urls'] = {}
       service_ports_from_config.each do |service, ports|
         @urls[service] = {}
+        @project.env['urls'][service] = {}
         ports.each do |port|
           @urls[service][port.to_s] = generate_haikunated_url
+          @project.env['urls'][service][port.to_s] = "http://#{@urls[service][port.to_s]}"
         end
       end
-      @project.env['urls'] = @urls
     end
 
     private

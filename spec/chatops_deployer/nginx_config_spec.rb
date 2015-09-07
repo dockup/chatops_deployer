@@ -54,13 +54,36 @@ describe ChatopsDeployer::NginxConfig do
     end
 
     context 'when exported urls are loaded' do
+      let(:fake_env) { {} }
       before do
-        expect(project).to receive(:env).and_return({})
+        allow(project).to receive(:env).and_return(fake_env)
         expect(nginx_config).to receive(:service_ports_from_config).and_return({ 'web' => [3000, 3001], 'admin' => [8080]})
         expect(Haikunator).to receive(:haikunate).and_return('shy-surf-3571')
         expect(Haikunator).to receive(:haikunate).and_return('long-flower-2811')
         expect(Haikunator).to receive(:haikunate).and_return('crimson-meadow-2')
         nginx_config.prepare_urls
+
+        expect(nginx_config.urls).to eql({
+          "web" => {
+            "3000" => "shy-surf-3571.127.0.0.1.xip.io",
+            "3001" => "long-flower-2811.127.0.0.1.xip.io"
+          },
+          "admin" => {
+            "8080" => "crimson-meadow-2.127.0.0.1.xip.io"
+          }
+        })
+
+        expect(fake_env).to eql({
+          "urls" => {
+            "web" => {
+              "3000" => "http://shy-surf-3571.127.0.0.1.xip.io",
+              "3001" => "http://long-flower-2811.127.0.0.1.xip.io"
+            },
+            "admin" => {
+              "8080" => "http://crimson-meadow-2.127.0.0.1.xip.io"
+            }
+          }
+        })
       end
       it 'creates an nginx config' do
         expect(ChatopsDeployer::Command).to receive(:run)

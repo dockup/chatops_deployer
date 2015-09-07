@@ -28,11 +28,11 @@ describe ChatopsDeployer::Command do
     end
 
     describe 'logging of stderr' do
-      let(:command_string) { "ls /nonexistent" }
+      let(:command_string) { "cat thisdoesntexist" }
 
       it 'logs the stderr of the command that gets run using INFO level' do
-        expect(fake_logger).to receive(:info).with("ls: /nonexistent: No such file or directory\n")
-        command = ChatopsDeployer::Command.run(command: "ls /nonexistent", logger: fake_logger)
+        expect(fake_logger).to receive(:info).with("cat: thisdoesntexist: No such file or directory\n")
+        command = ChatopsDeployer::Command.run(command: command_string, logger: fake_logger)
         expect(command.success?).to be_falsey
       end
     end
