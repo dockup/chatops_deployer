@@ -81,7 +81,7 @@ commands:
 # If the source file ends with .erb, it's treated as an ERB template and gets
 # processed. ERB templates have access to an `env` variable which holds the
 # exposed urls. For example:
-# "<%= env['urls']['web']['3000'] %>" will be replaced with "crimson-cloud-12.example.com"
+# "<%= env['urls']['web']['3000'] %>" will be replaced with "http://crimson-cloud-12.example.com"
 copy:
   - "myapp_development.env.erb:config.env"
 ```
