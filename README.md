@@ -28,6 +28,11 @@ export DEPLOYER_HOST=<hostname where nginx listens>
 export WORKSPACE=<path where you want your projects to be git-cloned> # default: '/var/www'
 export NGINX_SITES_ENABLED_DIR=<path to sites-enabled directory in nginx conf> # default: '/etc/nginx/sites-enabled'
 export COPY_SOURCE_DIR = <path to directory containing source files to be copied over to projects> # default: '/etc/chatops_deployer/copy'
+
+# Optional to use Vault for managing and distributing secrets
+export VAULT_ADDR= <address where vault server is listening>
+export VAULT_TOKEN= <token which can read keys stored under path secret/*>
+export VAULT_CACERT= <CA certificate file to verify vault server SSL certificate>
 ```
 And run the server as the root user:
 
@@ -74,16 +79,24 @@ commands:
       - bundle exec rake db:migrate
 
 # `copy` is an array of strings in the format "<source>:<destination>"
-# source is the path to a file relative to /etc/chatops_deployer/copy in the deployer.
+# If source begins with './' , the source file is searched from the root of the cloned
+# repo, else it is assumed to be a path to a file relative to
+# /etc/chatops_deployer/copy in the deployer server.
 # destination is the path relative to chatops_deployer.yml to which the source file
 # should be copied. Copying of files happen soon after the repository is cloned
 # and before any docker containers are created.
 # If the source file ends with .erb, it's treated as an ERB template and gets
-# processed. ERB templates have access to an `env` variable which holds the
-# exposed urls. For example:
+# processed. You have access to the following objects inside the ERB templates:
+# "env", "vault"
+#
+# "env" holds the exposed urls. For example:
 # "<%= env['urls']['web']['3000'] %>" will be replaced with "http://crimson-cloud-12.example.com"
+#
+# "vault" can be used to access secrets managed using Vault if you have set it up
+# "<%= vault.read('secret/app-name/AWS_SECRET_KEY', 'value') %>" will be replaced with the secret key fetched from Vault
+# using the command `vault read -field=value secret/app-name/AWS_SECRET_KEY`
 copy:
-  - "myapp_development.env.erb:config.env"
+  - "./config.dev.env.erb:config.env"
 ```
 
 ### Deployment

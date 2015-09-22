@@ -132,7 +132,6 @@ describe ChatopsDeployer::Project do
 
     context 'when source is an .erb file' do
       let(:source_path) { File.join(source_directory, 'sample.txt.erb') }
-      let(:source_content) { "Hello <%= env['name'] %>" }
 
       let(:config) do
         <<-EOM
@@ -140,10 +139,47 @@ describe ChatopsDeployer::Project do
             - "app_name/staging/sample.txt.erb"
         EOM
       end
-      it 'compiles the ERB tags' do
-        project.env = {'name' => 'Rosemary'}
+
+      context 'when env hash is used in ERB' do
+        let(:source_content) { "Hello <%= env['name'] %>" }
+        it 'compiles the ERB tags with env values' do
+          project.env = {'name' => 'Rosemary'}
+          project.copy_files_from_deployer
+          expect(File.read('sample.txt')).to eql "Hello Rosemary\n"
+        end
+      end
+
+      context 'when vault object is used in ERB' do
+        let(:source_content) { "Secret: <%= vault.read('secret', 'value') %>" }
+        before do
+          fake_vault = double('Vault')
+          expect(fake_vault).to receive(:read)
+            .with('secret', 'value')
+            .and_return('this-is-a-secret')
+          expect(ChatopsDeployer::Vault).to receive(:new)
+            .and_return fake_vault
+        end
+        it 'compiles the ERB tags' do
+          project.env = {'name' => 'Rosemary'}
+          project.copy_files_from_deployer
+          expect(File.read('sample.txt')).to eql "Secret: this-is-a-secret\n"
+        end
+      end
+    end
+
+    context 'when source starts with ./' do
+      let(:source_path) { File.join(project.directory, 'sample.txt') }
+      let(:source_content) { "I'm inside the project" }
+
+      let(:config) do
+        <<-EOM
+          copy:
+            - "./sample.txt:sample1.txt"
+        EOM
+      end
+      it 'copies the file from project directory to destination' do
         project.copy_files_from_deployer
-        expect(File.read('sample.txt')).to eql "Hello Rosemary\n"
+        expect(File.read('sample1.txt')).to eql "I'm inside the project\n"
       end
     end
   end

@@ -1,10 +1,13 @@
+require 'chatops_deployer/vault'
+
 module ChatopsDeployer
   class Template
-    attr_reader :env
+    attr_reader :env, :vault
 
     def initialize(input_file_path)
       @erb = ERB.new(File.read(input_file_path))
       @env = {}
+      @vault = ChatopsDeployer::Vault.new
     end
 
     def inject(env)
