@@ -6,5 +6,6 @@ module ChatopsDeployer
   COPY_SOURCE_DIR = ENV['DEPLOYER_COPY_SOURCE_DIR'] || '/etc/chatops_deployer/copy'
   LOG_URL = ENV['DEPLOYER_LOG_URL']
   REGISTRY_MIRROR = ENV['DEPLOYER_REGISTRY_MIRROR']
+  CACHE_PATH = ENV['DEPLOYER_CACHE_PATH'] || '/etc/chatops_deployer/cache'
 end
 
