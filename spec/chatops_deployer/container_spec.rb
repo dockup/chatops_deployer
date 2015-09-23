@@ -58,13 +58,14 @@ describe ChatopsDeployer::Container do
       expect(ChatopsDeployer::Command).to receive(:run)
         .with(command: 'docker-compose port web 3000', logger: container.logger)
         .and_return double(:command, success?: true, output: '0.0.0.0:3001')
+      ChatopsDeployer::REGISTRY_MIRROR = "http://mirror"
     end
     it 'creates a VM with docker machine' do
       expect(ChatopsDeployer::Command).to receive(:run)
         .with(command: 'docker-machine url fake_sha1', logger: container.logger)
         .and_return double(:command, success?: false)
       expect(ChatopsDeployer::Command).to receive(:run)
-        .with(command: 'docker-machine create --driver virtualbox fake_sha1', logger: container.logger)
+        .with(command: 'docker-machine create --driver virtualbox fake_sha1 --engine-registry-mirror=http://mirror', logger: container.logger)
       expect(ChatopsDeployer::Command).to receive(:run)
         .with(command: 'docker-compose run web bundle exec rake db:create', logger: container.logger)
         .and_return double(:command, success?: true)

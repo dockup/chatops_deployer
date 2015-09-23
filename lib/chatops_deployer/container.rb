@@ -35,7 +35,8 @@ module ChatopsDeployer
     def create_docker_machine
       unless vm_exists?
         logger.info "Creating VM #{@sha1}"
-        Command.run(command: "docker-machine create --driver virtualbox #{@sha1}", logger: logger)
+        mirror_config = REGISTRY_MIRROR ? " --engine-registry-mirror=#{REGISTRY_MIRROR}" : ""
+        Command.run(command: "docker-machine create --driver virtualbox #{@sha1}#{mirror_config}", logger: logger)
         @first_run = true
       end
       get_ip = Command.run(command: "docker-machine ip #{@sha1}", logger: logger)
