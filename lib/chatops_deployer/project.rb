@@ -47,7 +47,8 @@ module ChatopsDeployer
         logger.info "Copying files from deployer to project"
         copy_list.each do |copy_string|
           source, destination = copy_string.split(':')
-          source = File.join(COPY_SOURCE_DIR, source)
+          # source is from COPY_SOURCE_DIR if source doesn't start with ./
+          source = File.join(COPY_SOURCE_DIR, source) unless source.match(/^\.\//)
           if File.extname(source) == '.erb'
             destination ||= File.basename(source, '.erb')
             logger.info "Processing ERB template #{source} into #{destination}"

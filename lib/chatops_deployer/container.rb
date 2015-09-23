@@ -58,6 +58,7 @@ module ChatopsDeployer
     end
 
     def docker_compose_run_commands
+      logger.info "Running commands on containers"
       if service_commands = @config['commands']
         service_commands.each do |service, commands_hash|
           commands = if @first_run
@@ -65,6 +66,7 @@ module ChatopsDeployer
           else
             commands_hash['next_runs'] || []
           end
+          logger.info "Running commands on #{service} : #{commands.inspect}"
           commands.each do |command|
             docker_compose_run = Command.run(command: "docker-compose run #{service} #{command}", logger: logger)
             raise_error("docker-compose run #{service} #{command} failed") unless docker_compose_run.success?

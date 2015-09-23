@@ -2,11 +2,11 @@ PATH
   remote: .
   specs:
     chatops_deployer (0.1.0)
-      command
-      haikunator
-      httparty
-      sinatra
-      sucker_punch
+      haikunator (~> 1.1)
+      httparty (~> 0.13)
+      sinatra (~> 1.4)
+      sucker_punch (~> 1.5)
+      vault (~> 0.1)
 
 GEM
   remote: https://rubygems.org/
@@ -18,7 +18,6 @@ GEM
       timers (~> 4.0.0)
     coderay (1.1.0)
     columnize (0.9.0)
-    command (1.0.0)
     crack (0.4.2)
       safe_yaml (~> 1.0.0)
     diff-lcs (1.2.5)
@@ -64,8 +63,9 @@ GEM
     sucker_punch (1.5.1)
       celluloid (= 0.16.0)
     tilt (2.0.1)
-    timers (4.0.1)
+    timers (4.0.4)
       hitimes
+    vault (0.1.5)
     webmock (1.21.0)
       addressable (>= 2.3.6)
       crack (>= 0.3.2)

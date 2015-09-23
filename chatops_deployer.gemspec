@@ -19,9 +19,9 @@ Gem::Specification.new do |spec|
   spec.executables   = spec.files.grep(%r{^exe/}) { |f| File.basename(f) }
   spec.require_paths = ["lib"]
 
-  spec.add_dependency "sinatra"
-  spec.add_dependency "sucker_punch"
-  spec.add_dependency "httparty"
-  spec.add_dependency "command"
-  spec.add_dependency "haikunator"
+  spec.add_dependency "sinatra", "~> 1.4"
+  spec.add_dependency "sucker_punch", "~> 1.5"
+  spec.add_dependency "httparty", "~> 0.13"
+  spec.add_dependency "haikunator", "~> 1.1"
+  spec.add_dependency "vault", "~> 0.1"
 end
