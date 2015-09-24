@@ -99,6 +99,13 @@ commands:
 # using the command `vault read -field=value secret/app-name/AWS_SECRET_KEY`
 copy:
   - "./config.dev.env.erb:config.env"
+
+# chatops_deployer mounts a volume on every VM inside which docker containers
+# are created. By default, the mount point is /cache. Use cache_mount_point
+# to override the mount path.
+# This directory can then be mounted inside the required services
+# in docker-compose.yml.
+cache_mount_point: /tmp/cache
 ```
 
 ### Deployment

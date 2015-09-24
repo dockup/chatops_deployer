@@ -37,11 +37,7 @@ module ChatopsDeployer
         logger.info "Creating VM #{@sha1}"
         mirror_config = REGISTRY_MIRROR ? " --engine-registry-mirror=#{REGISTRY_MIRROR}" : ""
         Command.run(command: "docker-machine create --driver virtualbox #{@sha1}#{mirror_config}", logger: logger)
-        Command.run(command: "docker-machine stop #{@sha1}", logger: logger)
-        Command.run(command: "VBoxManage sharedfolder add #{@sha1} --name cache --hostpath #{CACHE_PATH} --automount", logger: logger)
-        Command.run(command: "docker-machine start #{@sha1}", logger: logger)
-        cache_mount_point = @config['cache_mount_point'] || '/cache'
-        Command.run(command: "docker-machine ssh #{@sha1} 'sudo mount -t vboxsf -o uid=$UID cache #{cache_mount_point}'", logger: logger)
+        mount_cache_volume
         @first_run = true
       end
       get_ip = Command.run(command: "docker-machine ip #{@sha1}", logger: logger)
@@ -116,6 +112,15 @@ module ChatopsDeployer
       raise_error("Cannot find exposed port for #{port} in service #{service}") unless docker_port.success?
       port = docker_port.output.chomp.split(':').last
       [@ip, port]
+    end
+
+    def mount_cache_volume
+      Command.run(command: "docker-machine stop #{@sha1}", logger: logger)
+      Command.run(command: "VBoxManage sharedfolder add #{@sha1} --name cache --hostpath #{CACHE_PATH} --automount", logger: logger)
+      Command.run(command: "docker-machine start #{@sha1}", logger: logger)
+      cache_mount_point = @config['cache_mount_point'] || '/cache'
+      Command.run(command: "docker-machine ssh #{@sha1} 'sudo mkdir -p #{cache_mount_point}'", logger: logger)
+      Command.run(command: "docker-machine ssh #{@sha1} 'sudo mount -t vboxsf -o defaults,uid=`id -u docker`,gid=`id -g docker` cache #{cache_mount_point}'", logger: logger)
     end
 
     def raise_error(message)
