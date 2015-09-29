@@ -80,7 +80,7 @@ module ChatopsDeployer
         target_cache_dir = File.join(@branch_directory, directory)
         FileUtils.mkdir_p cache_dir
         FileUtils.mkdir_p target_cache_dir
-        Dir.rmdir target_cache_dir
+        FileUtils.rm_rf target_cache_dir
         File.symlink(cache_dir, target_cache_dir)
       end
     end
@@ -91,17 +91,10 @@ module ChatopsDeployer
       matchdata = @repository.match(/.*github.com\/(.*)\/(.*).git/)
       raise_error("Bad github repository: #{@repository}") if matchdata.nil?
       org, repo = matchdata.captures
-      @branch_directory = File.join(WORKSPACE, org, repo, @branch)
+      @branch_directory = File.join(WORKSPACE, org, repo, 'repositories', @branch)
       @project_directory = File.join(WORKSPACE, org, repo)
       FileUtils.mkdir_p @branch_directory
       FileUtils.mkdir_p File.join(@project_directory, 'cache')
-    end
-
-    def project_directory(repository, branch)
-      matchdata = repository.match(/.*github.com\/(.*)\/(.*).git/)
-      raise_error("Bad github repository: #{repository}") if matchdata.nil?
-      org, repo = matchdata.captures
-      File.join(org, repo, branch)
     end
 
     def raise_error(message)

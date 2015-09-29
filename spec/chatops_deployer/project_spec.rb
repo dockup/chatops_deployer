@@ -6,7 +6,7 @@ describe ChatopsDeployer::Project do
 
   describe "initialize" do
     it 'creates the project and branch directories' do
-      branch_dir = File.join(ChatopsDeployer::WORKSPACE, 'code-mancers/app/branch')
+      branch_dir = File.join(ChatopsDeployer::WORKSPACE, 'code-mancers/app/repositories/branch')
       project_dir = File.join(ChatopsDeployer::WORKSPACE, 'code-mancers/app')
       expect(project.branch_directory).to eql branch_dir
       expect(File.exists?(branch_dir)).to be_truthy
@@ -20,7 +20,7 @@ describe ChatopsDeployer::Project do
     end
 
     it 'does not throw any error if project directory exists' do
-      FileUtils.mkdir_p File.join(ChatopsDeployer::WORKSPACE, 'code-mancers/app/branch')
+      FileUtils.mkdir_p File.join(ChatopsDeployer::WORKSPACE, 'code-mancers/app/repositories/branch')
       expect{ project }.not_to raise_error
     end
   end
@@ -207,7 +207,7 @@ describe ChatopsDeployer::Project do
 
   describe '#setup_cache_directories' do
     let(:project_dir) { File.join(ChatopsDeployer::WORKSPACE, 'code-mancers/app') }
-    let(:branch_dir) { File.join(project_dir, 'branch') }
+    let(:branch_dir) { File.join(project_dir, 'repositories', 'branch') }
     let(:common_cache_dir) { File.join(project_dir, 'cache') }
 
     before do
