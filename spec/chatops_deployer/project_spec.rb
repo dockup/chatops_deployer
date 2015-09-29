@@ -1,19 +1,26 @@
 require 'chatops_deployer/project'
 
 describe ChatopsDeployer::Project do
-  let(:project) { ChatopsDeployer::Project.new('repo', 'branch') }
+  let(:repo) { 'https://github.com/code-mancers/app.git' }
+  let(:project) { ChatopsDeployer::Project.new(repo, 'branch') }
 
   describe "initialize" do
-    it 'creates the project directory' do
-      project_dir = File.join(ChatopsDeployer::WORKSPACE, project.sha1)
-      expect(project.directory).to eql project_dir
+    it 'creates the project and branch directories' do
+      branch_dir = File.join(ChatopsDeployer::WORKSPACE, 'code-mancers/app/branch')
+      project_dir = File.join(ChatopsDeployer::WORKSPACE, 'code-mancers/app')
+      expect(project.branch_directory).to eql branch_dir
+      expect(File.exists?(branch_dir)).to be_truthy
       expect(File.exists?(project_dir)).to be_truthy
     end
 
+    it 'creates a cache directory inside the project directory' do
+      cache_dir = File.join(ChatopsDeployer::WORKSPACE, 'code-mancers/app/cache')
+      project
+      expect(File.exists?(cache_dir)).to be_truthy
+    end
+
     it 'does not throw any error if project directory exists' do
-      expect(Digest::SHA1).to receive(:hexdigest).with('repobranch')
-        .and_return('fakse_sha1')
-      FileUtils.mkdir_p File.join(ChatopsDeployer::WORKSPACE, 'fake_sha1')
+      FileUtils.mkdir_p File.join(ChatopsDeployer::WORKSPACE, 'code-mancers/app/branch')
       expect{ project }.not_to raise_error
     end
   end
@@ -21,22 +28,22 @@ describe ChatopsDeployer::Project do
   describe '#fetch_repo' do
     context 'when directory is empty' do
       it 'clones the git repo' do
-        git_command = ["git", "clone", "--branch=branch", "--depth=1", "repo", "."]
+        git_command = ["git", "clone", "--branch=branch", "--depth=1", repo, "."]
         expect(ChatopsDeployer::Command).to receive(:run)
           .with(command: git_command, logger: project.logger) do
           double(:command, success?: true)
         end
-        Dir.chdir project.directory
+        Dir.chdir project.branch_directory
         project.fetch_repo
       end
     end
 
     context 'when directory is not empty' do
       it 'pulls changes from remote branch' do
-        dummy_file = File.join project.directory, 'dummy'
+        dummy_file = File.join project.branch_directory, 'dummy'
         File.open(dummy_file, 'w')
 
-        Dir.chdir project.directory
+        Dir.chdir project.branch_directory
         git_command = ["git", "pull", "origin", "branch"]
         expect(ChatopsDeployer::Command).to receive(:run)
           .with(command: git_command, logger: project.logger) do
@@ -46,9 +53,12 @@ describe ChatopsDeployer::Project do
       end
     end
 
+  end
+
+  describe '#read_config' do
     context 'when config_file is present' do
       before do
-        Dir.chdir project.directory
+        Dir.chdir project.branch_directory
         File.open('chatops_deployer.yml', 'w') do |f|
           f.puts <<-EOM
             key: value
@@ -56,26 +66,42 @@ describe ChatopsDeployer::Project do
         end
       end
       it 'loads the YML file into config' do
-        git_command = ["git", "pull", "origin", "branch"]
-        expect(ChatopsDeployer::Command).to receive(:run)
-          .with(command: git_command, logger: project.logger) do
-          double(:command, success?: true)
-        end
-        project.fetch_repo
+        project.read_config
         expect(project.config).to eql({"key" => "value"})
       end
     end
 
     context 'when config_file is not present' do
       it 'config is an empty hash' do
-        git_command = ["git", "clone", "--branch=branch", "--depth=1", "repo", "."]
-        expect(ChatopsDeployer::Command).to receive(:run)
-          .with(command: git_command, logger: project.logger) do
-          double(:command, success?: true)
-        end
-        Dir.chdir project.directory
-        project.fetch_repo
+        Dir.chdir project.branch_directory
+        project.read_config
         expect(project.config).to eql({})
+      end
+    end
+
+    context 'when config_file is empty' do
+      before do
+        Dir.chdir project.branch_directory
+        File.open('chatops_deployer.yml', 'w')
+      end
+      it 'config is an empty hash' do
+        project.read_config
+        expect(project.config).to eql({})
+      end
+    end
+
+    context 'when config_file cannot be read' do
+      before do
+        Dir.chdir project.branch_directory
+        File.open('chatops_deployer.yml', 'w') do |f|
+          f.puts <<-EOM
+            : -
+          EOM
+        end
+      end
+      it 'throws an error' do
+        expect{ project.read_config }.to raise_error ChatopsDeployer::Project::Error,
+          "Project error: Cannot parse YAML content in chatops_deployer.yml"
       end
     end
   end
@@ -90,16 +116,11 @@ describe ChatopsDeployer::Project do
         f.puts source_content
       end
 
-      Dir.chdir project.directory
+      Dir.chdir project.branch_directory
       File.open('chatops_deployer.yml', 'w') do |f|
         f.puts config
       end
-      git_command = ["git", "pull", "origin", "branch"]
-      expect(ChatopsDeployer::Command).to receive(:run)
-        .with(command: git_command, logger: project.logger) do
-        double(:command, success?: true)
-      end
-      project.fetch_repo
+      project.read_config
     end
 
     context 'when destination path is not provided explicitly' do
@@ -168,7 +189,7 @@ describe ChatopsDeployer::Project do
     end
 
     context 'when source starts with ./' do
-      let(:source_path) { File.join(project.directory, 'sample.txt') }
+      let(:source_path) { File.join(project.branch_directory, 'sample.txt') }
       let(:source_content) { "I'm inside the project" }
 
       let(:config) do
@@ -180,6 +201,60 @@ describe ChatopsDeployer::Project do
       it 'copies the file from project directory to destination' do
         project.copy_files_from_deployer
         expect(File.read('sample1.txt')).to eql "I'm inside the project\n"
+      end
+    end
+  end
+
+  describe '#setup_cache_directories' do
+    let(:project_dir) { File.join(ChatopsDeployer::WORKSPACE, 'code-mancers/app') }
+    let(:branch_dir) { File.join(project_dir, 'branch') }
+    let(:common_cache_dir) { File.join(project_dir, 'cache') }
+
+    before do
+      Dir.chdir project.branch_directory
+      File.open('chatops_deployer.yml', 'w') do |f|
+        f.puts config
+      end
+      project.read_config
+    end
+
+    context 'when cache is not specified in the config' do
+      let(:config) { "" }
+      it 'does not throw any error' do
+        expect{ project.setup_cache_directories }.not_to raise_error
+      end
+    end
+
+    context 'when cache is empty' do
+      let(:config) do
+        <<-EOM
+          cache:
+        EOM
+      end
+      it 'does not throw any error' do
+        expect{ project.setup_cache_directories }.not_to raise_error
+      end
+    end
+
+    context 'when cache directories are specified' do
+      let(:config) do
+        <<-EOM
+          cache:
+            - tmp/bundler
+            - tmp/node_modules
+        EOM
+      end
+
+      it 'creates the cache directories in project cache' do
+        project.setup_cache_directories
+        expect(File.exists?(File.join(branch_dir, 'tmp/bundler'))).to be_truthy
+        expect(File.exists?(File.join(branch_dir, 'tmp/node_modules'))).to be_truthy
+      end
+
+      it 'symlinks cache directories' do
+        project.setup_cache_directories
+        expect(File.realpath(File.join(branch_dir, 'tmp/bundler'))).to eql File.join(common_cache_dir, 'tmp/bundler')
+        expect(File.realpath(File.join(branch_dir, 'tmp/node_modules'))).to eql File.join(common_cache_dir, 'tmp/node_modules')
       end
     end
   end

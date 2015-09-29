@@ -98,6 +98,13 @@ commands:
 # using the command `vault read -field=value secret/app-name/AWS_SECRET_KEY`
 copy:
   - "./config.dev.env.erb:config.env"
+
+# `cache` is an array of directories that will be created relative to the root
+# of the cloned repo and will be shared among all deployments of the github repo
+# irrespective of branch.
+cache:
+  - tmp/bundler
+  - node_modules
 ```
 
 ### Deployment
