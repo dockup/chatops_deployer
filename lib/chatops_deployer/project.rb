@@ -73,7 +73,7 @@ module ChatopsDeployer
     end
 
     def setup_cache_directories
-      cache_directory_list = @config['cache'].to_a
+      cache_directory_list = @config['cache'].to_h
       cache_directory_list.each do |_, directories|
         directories.each do |directory|
           cache_dir = File.join(@common_cache_dir, directory)
@@ -87,19 +87,19 @@ module ChatopsDeployer
     end
 
     def update_cache
-      cache_directory_list = @config['cache'].to_a
+      cache_directory_list = @config['cache'].to_h
       cache_directory_list.each do |directory, service_paths|
         service_paths.each do |service, path|
-           ps = Command.run(command: ["docker-compose", "ps", "-q", service], logger: logger)
-           container = ps.output.chomp
-           next if container.empty?
-           cache_dir = File.join(@common_cache_dir, directory)
-           tmp_dir = File.join(@project_directory, 'tmp_cache')
-           copy_from_container = Command.run(command: ["docker", "cp", "#{container}:#{path}", tmp_dir], logger: logger)
-           raise_error("Cannot copy '#{path}' from container '#{container}' of service '#{service}'")
-           FileUtils.rm_rf(cache_dir)
-           FileUtils.mv(tmp_dir, cache_dir)
-           FileUtils.rm_rf(tmp_dir)
+          ps = Command.run(command: ["docker-compose", "ps", "-q", service], logger: logger)
+          container = ps.output.chomp
+          next if container.empty?
+          cache_dir = File.join(@common_cache_dir, directory)
+          tmp_dir = File.join(@project_directory, 'tmp_cache')
+          copy_from_container = Command.run(command: ["docker", "cp", "#{container}:#{path}", tmp_dir], logger: logger)
+          raise_error("Cannot copy '#{path}' from container '#{container}' of service '#{service}'")
+          FileUtils.rm_rf(cache_dir)
+          FileUtils.mv(tmp_dir, cache_dir)
+          FileUtils.rm_rf(tmp_dir)
         end
       end
     end
