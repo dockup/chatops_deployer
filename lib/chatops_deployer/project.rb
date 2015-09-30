@@ -74,15 +74,13 @@ module ChatopsDeployer
 
     def setup_cache_directories
       cache_directory_list = @config['cache'].to_h
-      cache_directory_list.each do |_, directories|
-        directories.each do |directory|
-          cache_dir = File.join(@common_cache_dir, directory)
-          target_cache_dir = File.join(@branch_directory, directory)
-          FileUtils.mkdir_p cache_dir
-          FileUtils.mkdir_p target_cache_dir
-          FileUtils.rm_rf target_cache_dir
-          FileUtils.cp_r(cache_dir, target_cache_dir)
-        end
+      cache_directory_list.each do |directory, _|
+        cache_dir = File.join(@common_cache_dir, directory)
+        target_cache_dir = File.join(@branch_directory, directory)
+        FileUtils.mkdir_p cache_dir
+        FileUtils.mkdir_p target_cache_dir
+        FileUtils.rm_rf target_cache_dir
+        FileUtils.cp_r(cache_dir, target_cache_dir)
       end
     end
 
