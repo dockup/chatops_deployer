@@ -74,14 +74,33 @@ module ChatopsDeployer
 
     def setup_cache_directories
       cache_directory_list = @config['cache'].to_a
-      return if cache_directory_list.empty?
-      cache_directory_list.each do |directory|
-        cache_dir = File.join(@project_directory, 'cache', directory)
-        target_cache_dir = File.join(@branch_directory, directory)
-        FileUtils.mkdir_p cache_dir
-        FileUtils.mkdir_p target_cache_dir
-        FileUtils.rm_rf target_cache_dir
-        File.symlink(cache_dir, target_cache_dir)
+      cache_directory_list.each do |_, directories|
+        directories.each do |directory|
+          cache_dir = File.join(@common_cache_dir, directory)
+          target_cache_dir = File.join(@branch_directory, directory)
+          FileUtils.mkdir_p cache_dir
+          FileUtils.mkdir_p target_cache_dir
+          FileUtils.rm_rf target_cache_dir
+          FileUtils.cp_r(cache_dir, target_cache_dir)
+        end
+      end
+    end
+
+    def update_cache
+      cache_directory_list = @config['cache'].to_a
+      cache_directory_list.each do |directory, service_paths|
+        service_paths.each do |service, path|
+           ps = Command.run(command: ["docker-compose", "ps", "-q", service], logger: logger)
+           container = ps.output.chomp
+           next if container.empty?
+           cache_dir = File.join(@common_cache_dir, directory)
+           tmp_dir = File.join(@project_directory, 'tmp_cache')
+           copy_from_container = Command.run(command: ["docker", "cp", "#{container}:#{path}", tmp_dir], logger: logger)
+           raise_error("Cannot copy '#{path}' from container '#{container}' of service '#{service}'")
+           FileUtils.rm_rf(cache_dir)
+           FileUtils.mv(tmp_dir, cache_dir)
+           FileUtils.rm_rf(tmp_dir)
+        end
       end
     end
 
@@ -93,8 +112,9 @@ module ChatopsDeployer
       org, repo = matchdata.captures
       @branch_directory = File.join(WORKSPACE, org, repo, 'repositories', @branch)
       @project_directory = File.join(WORKSPACE, org, repo)
+      @common_cache_dir = File.join(@project_directory, 'cache')
       FileUtils.mkdir_p @branch_directory
-      FileUtils.mkdir_p File.join(@project_directory, 'cache')
+      FileUtils.mkdir_p @common_cache_dir
     end
 
     def raise_error(message)
