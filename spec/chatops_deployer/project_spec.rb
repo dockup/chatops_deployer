@@ -240,8 +240,10 @@ describe ChatopsDeployer::Project do
       let(:config) do
         <<-EOM
           cache:
-            - tmp/bundler
-            - tmp/node_modules
+            tmp/bundler:
+              api: /app/tmp/bundler
+            tmp/node_modules:
+              frontend: /web/tmp/node_modules
         EOM
       end
 
@@ -250,11 +252,48 @@ describe ChatopsDeployer::Project do
         expect(File.exists?(File.join(branch_dir, 'tmp/bundler'))).to be_truthy
         expect(File.exists?(File.join(branch_dir, 'tmp/node_modules'))).to be_truthy
       end
+    end
+  end
 
-      it 'symlinks cache directories' do
-        project.setup_cache_directories
-        expect(File.realpath(File.join(branch_dir, 'tmp/bundler'))).to eql File.join(common_cache_dir, 'tmp/bundler')
-        expect(File.realpath(File.join(branch_dir, 'tmp/node_modules'))).to eql File.join(common_cache_dir, 'tmp/node_modules')
+  describe '#update_cache' do
+    let(:project_dir) { File.join(ChatopsDeployer::WORKSPACE, 'code-mancers/app') }
+    let(:branch_dir) { File.join(project_dir, 'repositories', 'branch') }
+    let(:common_cache_dir) { File.join(project_dir, 'cache') }
+    let(:tmp_cache_dir) { File.join(project_dir, 'tmp_cache') }
+
+    before do
+      FileUtils.mkdir_p File.join(common_cache_dir, 'tmp/bundler')
+      Dir.chdir project.branch_directory
+      File.open('chatops_deployer.yml', 'w') do |f|
+        f.puts config
+      end
+      project.read_config
+    end
+
+    context 'when cache is specified' do
+      let(:config) do
+        <<-EOM
+          cache:
+            tmp/bundler:
+              api: /app/tmp/bundler
+        EOM
+      end
+      it 'copies the directory from the container to host' do
+        ps_command = ["docker-compose", "ps", "-q", "api"]
+        expect(ChatopsDeployer::Command).to receive(:run)
+          .with(command: ps_command, logger: project.logger) do
+          double(:command, success?: true, output: 'fake_container_id')
+        end
+
+        cp_command = ["docker", "cp", "fake_container_id:/app/tmp/bundler", tmp_cache_dir]
+        expect(ChatopsDeployer::Command).to receive(:run)
+          .with(command: cp_command, logger: project.logger) do
+          double(:command, success?: true)
+        end
+        FileUtils.mkdir_p tmp_cache_dir
+
+        project.update_cache
+        expect(File.exists?(tmp_cache_dir)).to be_falsey
       end
     end
   end

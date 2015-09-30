@@ -33,6 +33,7 @@ describe ChatopsDeployer::DeployJob do
         expect(project).to receive(:read_config)
         expect(project).to receive(:copy_files_from_deployer)
         expect(project).to receive(:setup_cache_directories)
+        expect(project).to receive(:update_cache)
         expect(project).to receive(:branch_directory).and_return('/tmp')
         expect(container).to receive(:build)
         urls = {'web' => ['192.168.0.1:3000']}
