@@ -94,7 +94,7 @@ module ChatopsDeployer
           cache_dir = File.join(@common_cache_dir, directory)
           tmp_dir = File.join(@project_directory, 'tmp_cache')
           copy_from_container = Command.run(command: ["docker", "cp", "#{container}:#{path}", tmp_dir], logger: logger)
-          raise_error("Cannot copy '#{path}' from container '#{container}' of service '#{service}'")
+          raise_error("Cannot copy '#{path}' from container '#{container}' of service '#{service}'") unless copy_from_container.success?
           FileUtils.rm_rf(cache_dir)
           FileUtils.mv(tmp_dir, cache_dir)
           FileUtils.rm_rf(tmp_dir)
