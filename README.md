@@ -98,6 +98,20 @@ commands:
 # using the command `vault read -field=value secret/app-name/AWS_SECRET_KEY`
 copy:
   - "./config.dev.env.erb:config.env"
+
+# `cache` is a hash in the format <directory_in_code>: {<service>: <directory_in_service>}
+# <directory_in_code> is a directory under the root of the cloned repo
+# where a cached directory is created.
+# <service> is the name of a service which will have the cached directory in its container.
+# <directory_in_service> is the absolute path of the cached directory inside the running service.
+# The `cache` option allows you to share data among deployments (for faster deployments).
+# Before every deployment, each cache directory is mounted under the cloned repo.
+# These directories can then be used during docker build. Once the app is deployed,
+# the cache directories are updated with their latest content from the running
+# containers, which will be used for subsequent deployments.
+cache:
+  - tmp/bundler
+  - node_modules
 ```
 
 ### Deployment

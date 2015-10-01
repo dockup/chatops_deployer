@@ -25,11 +25,14 @@ module ChatopsDeployer
         obj.logger = @logger
       end
 
-      Dir.chdir(@project.directory) do
+      Dir.chdir(@project.branch_directory) do
         @project.fetch_repo
+        @project.read_config
         @nginx_config.prepare_urls
         @project.copy_files_from_deployer
+        @project.setup_cache_directories
         @container.build
+        @project.update_cache
       end
       @nginx_config.add_urls(@container.urls)
       callback(callback_url, :deployment_success)

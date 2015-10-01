@@ -30,8 +30,11 @@ describe ChatopsDeployer::DeployJob do
         expect(project).to receive(:logger=)
         expect(project).to receive(:sha1).and_return 'fake_sha1'
         expect(project).to receive(:fetch_repo)
+        expect(project).to receive(:read_config)
         expect(project).to receive(:copy_files_from_deployer)
-        expect(project).to receive(:directory).and_return('/tmp')
+        expect(project).to receive(:setup_cache_directories)
+        expect(project).to receive(:update_cache)
+        expect(project).to receive(:branch_directory).and_return('/tmp')
         expect(container).to receive(:build)
         urls = {'web' => ['192.168.0.1:3000']}
         exposed_urls = {'web' => ['http://famous-five-17.example.com']}
