@@ -25,18 +25,14 @@ module ChatopsDeployer
 
     def fetch_repo
       logger.info "Fetching #{@repository}:#{@branch}"
-      if Dir.entries('.').size == 2
-        logger.info "Directory not found. Cloning"
-        git_clone = Command.run(command: ['git', 'clone', "--branch=#{@branch}", '--depth=1', @repository, '.'], logger: logger)
-        unless git_clone.success?
-          raise_error("Cannot clone git repository: #{@repository}, branch: #{@branch}")
-        end
-      else
-        logger.info "Directory exists. Fetching"
-        git_pull = Command.run(command: ['git', 'pull', 'origin', @branch], logger: logger)
-        unless git_pull.success?
-          raise_error("Cannot pull git repository: #{@repository}, branch: #{@branch}")
-        end
+      unless Dir.entries('.').size == 2
+        logger.info "Branch already cloned. Deleting everything before cloning again"
+        FileUtils.rm_rf '.'
+      end
+      logger.info "Cloning branch #{@repository}:#{@branch}"
+      git_clone = Command.run(command: ['git', 'clone', "--branch=#{@branch}", '--depth=1', @repository, '.'], logger: logger)
+      unless git_clone.success?
+        raise_error("Cannot clone git repository: #{@repository}, branch: #{@branch}")
       end
     end
 

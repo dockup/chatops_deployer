@@ -13,7 +13,6 @@ module ChatopsDeployer
     def initialize(project)
       @sha1 = project.sha1
       @urls = {}
-      @first_run = false
       @project = project
     end
 
@@ -33,12 +32,13 @@ module ChatopsDeployer
     private
 
     def create_docker_machine
-      unless vm_exists?
-        logger.info "Creating VM #{@sha1}"
-        mirror_config = REGISTRY_MIRROR ? " --engine-registry-mirror=#{REGISTRY_MIRROR}" : ""
-        Command.run(command: "docker-machine create --driver virtualbox #{@sha1}#{mirror_config}", logger: logger)
-        @first_run = true
+      if vm_exists?
+        logger.info "VM for the branch already exists. Destroying it."
+        Command.run(command: "docker-machine rm #{@sha1}", logger: logger)
       end
+      logger.info "Creating VM #{@sha1}"
+      mirror_config = REGISTRY_MIRROR ? " --engine-registry-mirror=#{REGISTRY_MIRROR}" : ""
+      Command.run(command: "docker-machine create --driver virtualbox #{@sha1}#{mirror_config}", logger: logger)
       get_ip = Command.run(command: "docker-machine ip #{@sha1}", logger: logger)
       unless get_ip.success?
         raise_error('Cannot create VM for running docker containers')
@@ -60,32 +60,19 @@ module ChatopsDeployer
 
     def docker_compose_run_commands
       logger.info "Running commands on containers"
-      if service_commands = @config['commands']
-        service_commands.each do |service, commands_hash|
-          commands = if @first_run
-            commands_hash['first_run'] || []
-          else
-            commands_hash['next_runs'] || []
-          end
-          logger.info "Running commands on #{service} : #{commands.inspect}"
-          commands.each do |command|
-            docker_compose_run = Command.run(command: "docker-compose run #{service} #{command}", logger: logger)
-            raise_error("docker-compose run #{service} #{command} failed") unless docker_compose_run.success?
-          end
-        end
+      commands = @config['commands']
+      commands.each do |service_commands|
+        service = service_commands[0]
+        command = service_commands[1]
+        docker_compose_run = Command.run(command: "docker-compose run #{service} #{command}", logger: logger)
+        raise_error("docker-compose run #{service} #{command} failed") unless docker_compose_run.success?
       end
     end
 
     def docker_compose_up
-      if @first_run
-        logger.info "Running docker-compose up"
-        docker_compose = Command.run(command: 'docker-compose up -d', logger: logger)
-        raise_error('docker-compose up failed') unless docker_compose.success?
-      else
-        logger.info "Running docker-compose restart"
-        docker_compose = Command.run(command: 'docker-compose restart', logger: logger)
-        raise_error('docker-compose restart failed') unless docker_compose.success?
-      end
+      logger.info "Running docker-compose up"
+      docker_compose = Command.run(command: 'docker-compose up -d', logger: logger)
+      raise_error('docker-compose up failed') unless docker_compose.success?
 
       if expose = @config['expose']
         expose.each do |service, ports|
