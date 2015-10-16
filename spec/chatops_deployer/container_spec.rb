@@ -23,12 +23,8 @@ describe ChatopsDeployer::Container do
         expose:
           web: [3000]
         commands:
-          web:
-            first_run:
-              - bundle exec rake db:create
-              - bundle exec rake db:schema:load
-            next_runs:
-              - bundle exec rake db:migrate
+          - [web, "bundle exec rake db:create"]
+          - [web, "bundle exec rake db:schema:load"]
       EOM
     end
   end
@@ -81,26 +77,6 @@ describe ChatopsDeployer::Container do
       expect(ENV['KEY1']).to eql 'VALUE1'
       expect(ENV['KEY2']).to eql 'VALUE2'
       expect(container.urls).to eql({'web' => [['1.2.3.4','3001']]})
-    end
-
-    context 'next runs' do
-      it 'runs the next_runs commands' do
-        expect(ChatopsDeployer::Command).to receive(:run)
-          .with(command: 'docker-machine url fake_sha1', logger: container.logger)
-          .and_return double(:command, success?: true)
-        expect(ChatopsDeployer::Command).to receive(:run)
-          .with(command: 'docker-compose run web bundle exec rake db:migrate', logger: container.logger)
-          .and_return double(:command, success?: true)
-        expect(ChatopsDeployer::Command).to receive(:run)
-          .with(command: 'docker-compose restart', logger: container.logger)
-          .and_return double(:command, success?: true)
-
-        container.build
-
-        expect(ENV['KEY1']).to eql 'VALUE1'
-        expect(ENV['KEY2']).to eql 'VALUE2'
-        expect(container.urls).to eql({'web' => [['1.2.3.4','3001']]})
-      end
     end
   end
 end

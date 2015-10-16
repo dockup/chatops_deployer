@@ -39,17 +39,18 @@ describe ChatopsDeployer::Project do
     end
 
     context 'when directory is not empty' do
-      it 'pulls changes from remote branch' do
+      it 'removes everything and clones again' do
         dummy_file = File.join project.branch_directory, 'dummy'
         File.open(dummy_file, 'w')
 
-        Dir.chdir project.branch_directory
-        git_command = ["git", "pull", "origin", "branch"]
+        git_command = ["git", "clone", "--branch=branch", "--depth=1", repo, "."]
         expect(ChatopsDeployer::Command).to receive(:run)
           .with(command: git_command, logger: project.logger) do
           double(:command, success?: true)
         end
+        Dir.chdir project.branch_directory
         project.fetch_repo
+        expect(Dir.entries('.').size).to eql 2
       end
     end
 

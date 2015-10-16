@@ -66,18 +66,13 @@ Here's an example `chatops_deployer.yml` :
 expose:
   web: [3000]
 
-# `commands` is a hash in the format <service>: {first_run: <array of commands>, next_runs: <array of commands>}
-# Commands under first_run are run only once, when the container is run for the first time.
-# Commands under next_runs are for all subsequent deployments in the same container, but not
-# run on the first deployment.
+# `commands` is a list of commands that should be run inside a service container
+# before all systems are go.
 # Commands are run in the same order as they appear in the list.
 commands:
-  web:
-    first_run:
-      - bundle exec rake db:create
-      - bundle exec rake db:schema:load
-    next_runs:
-      - bundle exec rake db:migrate
+  - [db, "./setup_script_in_container"]
+  - [web, "bundle exec rake db:create"]
+  - [web, "bundle exec rake db:schema:load"]
 
 # `copy` is an array of strings in the format "<source>:<destination>"
 # If source begins with './' , the source file is searched from the root of the cloned
