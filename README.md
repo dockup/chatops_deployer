@@ -28,7 +28,6 @@ export DEPLOYER_HOST=<hostname where nginx listens>
 export WORKSPACE=<path where you want your projects to be git-cloned> # default: '/var/www'
 export NGINX_SITES_ENABLED_DIR=<path to sites-enabled directory in nginx conf> # default: '/etc/nginx/sites-enabled'
 export COPY_SOURCE_DIR = <path to directory containing source files to be copied over to projects> # default: '/etc/chatops_deployer/copy'
-export DEPLOYER_REGISTRY_MIRROR = <URL of docker registry mirror if you want to make use of faster docker image pulls> # default: nil
 
 # Optional to use Vault for managing and distributing secrets
 export VAULT_ADDR= <address where vault server is listening>

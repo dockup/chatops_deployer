@@ -36,6 +36,11 @@ module ChatopsDeployer
       end
     end
 
+    def delete_repo
+      logger.info "Deleting #{@repository}:#{@branch}"
+      FileUtils.rm_rf @branch_directory
+    end
+
     def read_config
       @config = if File.exists?(@config_file)
         begin
