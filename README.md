@@ -8,8 +8,8 @@ in docker containers. Meant to be used with hubot.
 **All commands need to be run as the root user**
 So it's best if you can run this on a dedicated disposable server.
 
-2. docker-compose - For running multi-container apps
-4. nginx - For setting up a subdomain for each deployment
+1. docker-compose - For running multi-container apps
+2. nginx - For setting up a subdomain for each deployment
 
 TODO: setup script to install requirements on Ubuntu 14.04
 
