@@ -11,7 +11,7 @@ Gem::Specification.new do |spec|
 
   spec.summary       = %q{An opinionated Chatops backend for deploying apps}
   spec.description   = %q{ChatopsDeployer deploys containerized services and exposes public facing URLs}
-  spec.homepage      = "https://github.com/code-mancers/chatops-deployer"
+  spec.homepage      = "https://github.com/code-mancers/chatops_deployer"
   spec.license       = "MIT"
 
   spec.files         = `git ls-files -z`.split("\x0").reject { |f| f.match(%r{^(test|spec|features)/}) }
