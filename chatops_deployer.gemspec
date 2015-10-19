@@ -9,8 +9,8 @@ Gem::Specification.new do |spec|
   spec.authors       = ["Emil Soman"]
   spec.email         = ["emil@codemancers.com"]
 
-  spec.summary       = %q{An opinionated Chatops backend}
-  spec.description   = %q{ChatopsDeployer deploys containerized services in isolated VMs and exposes public facing URLs}
+  spec.summary       = %q{An opinionated Chatops backend for deploying apps}
+  spec.description   = %q{ChatopsDeployer deploys containerized services and exposes public facing URLs}
   spec.homepage      = "https://github.com/code-mancers/chatops-deployer"
   spec.license       = "MIT"
 
