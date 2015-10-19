@@ -26,9 +26,9 @@ module ChatopsDeployer
       end
 
       Dir.chdir(@project.branch_directory) do
-        if @project.exists?
+        if @project.cloned?
           @container.destroy
-          @project.delete_repo
+          @project.delete_repo_contents
         end
         @project.fetch_repo
         @project.read_config

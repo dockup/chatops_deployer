@@ -41,6 +41,10 @@ module ChatopsDeployer
       FileUtils.rm_rf @branch_directory
     end
 
+    def cloned?
+      Dir.entries('.').size > 2
+    end
+
     def delete_repo_contents
       logger.info "Deleting contents of #{@repository}:#{@branch}"
       FileUtils.rm_rf '.'
