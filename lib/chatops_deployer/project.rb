@@ -20,6 +20,13 @@ module ChatopsDeployer
       @branch = branch
       @config_file = config_file
       @env = {}
+
+      matchdata = @repository.match(/.*github.com\/(.*)\/(.*).git/)
+      raise_error("Bad github repository: #{@repository}") if matchdata.nil?
+      org, repo = matchdata.captures
+      @branch_directory = File.join(WORKSPACE, org, repo, 'repositories', @branch)
+      @project_directory = File.join(WORKSPACE, org, repo)
+      @common_cache_dir = File.join(@project_directory, 'cache')
     end
 
     def fetch_repo
@@ -112,12 +119,6 @@ module ChatopsDeployer
     end
 
     def setup_directory
-      matchdata = @repository.match(/.*github.com\/(.*)\/(.*).git/)
-      raise_error("Bad github repository: #{@repository}") if matchdata.nil?
-      org, repo = matchdata.captures
-      @branch_directory = File.join(WORKSPACE, org, repo, 'repositories', @branch)
-      @project_directory = File.join(WORKSPACE, org, repo)
-      @common_cache_dir = File.join(@project_directory, 'cache')
       FileUtils.mkdir_p @branch_directory
       FileUtils.mkdir_p @common_cache_dir
     end
