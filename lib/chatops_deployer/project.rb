@@ -15,7 +15,6 @@ module ChatopsDeployer
     attr_reader :sha1, :branch_directory, :config
     attr_accessor :env
     def initialize(repository, branch, config_file="chatops_deployer.yml")
-      @sha1 = Digest::SHA1.hexdigest(repository + branch)
       @repository = repository
       @branch = branch
       @config_file = config_file
@@ -24,6 +23,7 @@ module ChatopsDeployer
       matchdata = @repository.match(/.*github.com\/(.*)\/(.*).git/)
       raise_error("Bad github repository: #{@repository}") if matchdata.nil?
       org, repo = matchdata.captures
+      @sha1 = Digest::SHA1.hexdigest(org + repo + branch)
       @branch_directory = File.join(WORKSPACE, org, repo, 'repositories', @branch)
       @project_directory = File.join(WORKSPACE, org, repo)
       @common_cache_dir = File.join(@project_directory, 'cache')
