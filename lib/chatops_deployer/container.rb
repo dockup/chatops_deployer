@@ -80,7 +80,7 @@ module ChatopsDeployer
           @urls[service] = ports.collect do |port|
             #get_url_on_vm(service, port)
             #retry_on_exception(exception: Error) do
-            [get_ip_of_service(service), port]
+            [get_ip_of_service(service), port.to_s]
             #end
           end
         end
@@ -113,7 +113,7 @@ module ChatopsDeployer
       container_id_command = Command.run(command: "docker-compose -p #{@sha1} ps -q #{service}", logger: logger)
       ip_command = Command.run(command: "docker inspect --format='{{.NetworkSettings.IPAddress}}' #{container_id_command.output}")
       raise_error("Cannot find ip of service #{service}") unless ip_command.success?
-      ip_command.output
+      ip_command.output.chomp
     end
 
     def raise_error(message)
