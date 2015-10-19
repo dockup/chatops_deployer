@@ -1,6 +1,5 @@
 require 'sucker_punch'
 require 'fileutils'
-require 'httparty'
 require 'chatops_deployer/globals'
 require 'chatops_deployer/project'
 require 'chatops_deployer/nginx_config'
@@ -11,7 +10,7 @@ module ChatopsDeployer
   class DestroyJob
     include SuckerPunch::Job
 
-    def perform(repository:, branch:, callback_url:)
+    def perform(repository:, branch:, callbacks:[])
       @branch = branch
       @project = Project.new(repository, branch)
       log_file = File.open(LOG_FILE, 'a')
@@ -30,23 +29,13 @@ module ChatopsDeployer
       end
       @nginx_config.remove
       @project.delete_repo
-      callback(callback_url, :destroy_success)
+
+      @logger.info "Succesfully destroyed #{@branch}"
+      callbacks.each{|c| c.destroy_success(@branch)}
     rescue ChatopsDeployer::Error => e
-      @logger.error(e.message)
-      callback(callback_url, :destroy_failure, e.message)
-    end
-
-    private
-
-    def callback(callback_url, status, reason=nil)
-      body = {status: status, branch: @branch}
-      if status == :destroy_success
-        @logger.info "Succesfully destroyed #{@branch}"
-      else
-        body[:reason] = reason
-        @logger.info "Failed destroying #{@branch}. Reason: #{reason}"
-      end
-      HTTParty.post(callback_url, body: body.to_json, headers: {'Content-Type' => 'application/json'})
+      reason = e.message
+      @logger.info "Failed destroying #{@branch}. Reason: #{reason}"
+      callbacks.each{|c| c.destroy_failure(@branch, reason)}
     end
   end
 end
