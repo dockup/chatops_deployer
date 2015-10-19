@@ -25,6 +25,7 @@ module ChatopsDeployer
         obj.logger = @logger
       end
 
+      @project.setup_directory
       Dir.chdir(@project.branch_directory) do
         if @project.cloned?
           @container.destroy

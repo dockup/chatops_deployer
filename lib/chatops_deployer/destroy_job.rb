@@ -1,6 +1,11 @@
 require 'sucker_punch'
 require 'fileutils'
 require 'httparty'
+require 'chatops_deployer/globals'
+require 'chatops_deployer/project'
+require 'chatops_deployer/nginx_config'
+require 'chatops_deployer/container'
+require 'chatops_deployer/logger'
 
 module ChatopsDeployer
   class DestroyJob
@@ -8,7 +13,7 @@ module ChatopsDeployer
 
     def perform(repository:, branch:, callback_url:)
       @branch = branch
-      @project = Project.new(repository, branch, config_file)
+      @project = Project.new(repository, branch)
       log_file = File.open(LOG_FILE, 'a')
       @logger = ::Logger.new(MultiIO.new($stdout, log_file)).tap do |l|
         l.progname = @project.sha1

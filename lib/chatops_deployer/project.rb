@@ -20,7 +20,6 @@ module ChatopsDeployer
       @branch = branch
       @config_file = config_file
       @env = {}
-      setup_project_directory
     end
 
     def fetch_repo
@@ -112,9 +111,7 @@ module ChatopsDeployer
       end
     end
 
-    private
-
-    def setup_project_directory
+    def setup_directory
       matchdata = @repository.match(/.*github.com\/(.*)\/(.*).git/)
       raise_error("Bad github repository: #{@repository}") if matchdata.nil?
       org, repo = matchdata.captures
@@ -124,6 +121,8 @@ module ChatopsDeployer
       FileUtils.mkdir_p @branch_directory
       FileUtils.mkdir_p @common_cache_dir
     end
+
+    private
 
     def raise_error(message)
       raise Error, "Project error: #{message}"
