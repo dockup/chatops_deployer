@@ -26,6 +26,10 @@ module ChatopsDeployer
       end
 
       Dir.chdir(@project.branch_directory) do
+        if @project.exists?
+          @container.destroy
+          @project.delete_repo
+        end
         @project.fetch_repo
         @project.read_config
         @nginx_config.prepare_urls

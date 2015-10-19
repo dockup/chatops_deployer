@@ -24,11 +24,11 @@ module ChatopsDeployer
     end
 
     def fetch_repo
-      logger.info "Fetching #{@repository}:#{@branch}"
-      unless Dir.entries('.').size == 2
-        logger.info "Branch already cloned. Deleting everything before cloning again"
-        FileUtils.rm_rf '.'
-      end
+      #logger.info "Fetching #{@repository}:#{@branch}"
+      #unless Dir.entries('.').size == 2
+        #logger.info "Branch already cloned. Deleting everything before cloning again"
+        #FileUtils.rm_rf '.'
+      #end
       logger.info "Cloning branch #{@repository}:#{@branch}"
       git_clone = Command.run(command: ['git', 'clone', "--branch=#{@branch}", '--depth=1', @repository, '.'], logger: logger)
       unless git_clone.success?
@@ -39,6 +39,11 @@ module ChatopsDeployer
     def delete_repo
       logger.info "Deleting #{@repository}:#{@branch}"
       FileUtils.rm_rf @branch_directory
+    end
+
+    def delete_repo_contents
+      logger.info "Deleting contents of #{@repository}:#{@branch}"
+      FileUtils.rm_rf '.'
     end
 
     def read_config
