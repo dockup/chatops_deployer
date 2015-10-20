@@ -151,7 +151,7 @@ Example:
 {
   "status": "deployment_failure",
   "branch": "master",
-  "reason": "f052f10148bd290321b84f44: Nginx error: Config directory /etc/nginx/sites-enabled does not exist"
+  "reason": "Nginx error: Config directory /etc/nginx/sites-enabled does not exist"
 }
 ```
 
