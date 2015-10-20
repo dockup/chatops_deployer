@@ -38,10 +38,10 @@ describe ChatopsDeployer::Container do
   describe '#build' do
     it 'uses docker-compose create the environment' do
       expect(ChatopsDeployer::Command).to receive(:run)
-        .with(command: ['docker-compose', '-p', 'fake_sha1', 'run', 'web', 'bundle exec rake db:create'], logger: container.logger)
+        .with(command: ['docker-compose', '-p', 'fake_sha1', 'run', 'web', 'bundle', 'exec', 'rake', 'db:create'], logger: container.logger)
         .and_return double(:command, success?: true)
       expect(ChatopsDeployer::Command).to receive(:run)
-        .with(command: ["docker-compose", "-p", "fake_sha1", "run", "web", "bundle exec rake db:schema:load"], logger: container.logger)
+        .with(command: ["docker-compose", "-p", "fake_sha1", "run", "web", 'bundle', 'exec', 'rake', 'db:schema:load'], logger: container.logger)
         .and_return double(:command, success?: true)
       expect(ChatopsDeployer::Command).to receive(:run)
         .with(command: ['docker-compose', '-p', 'fake_sha1', 'up', '-d'], logger: container.logger)
