@@ -1,7 +1,16 @@
 # ChatopsDeployer
 
 A lightweight Sinatra app that deploys staging apps of git branches
-in docker containers. Meant to be used with hubot.
+in docker containers.
+
+Features:
+
+* Disposable environments using docker and friends
+* Simple API to deploy apps in github repos
+* Hubot ready
+* Works with Github webhooks
+* Supports multi-container environments
+* Support for secret management using Vault
 
 ## Requirements
 
@@ -23,9 +32,13 @@ Set the following ENV vars:
 
 ```bash
 export DEPLOYER_HOST=<hostname where nginx listens>
-export WORKSPACE=<path where you want your projects to be git-cloned> # default: '/var/www'
+export DEPLOYER_WORKSPACE=<path where you want your projects to be git-cloned> # default: '/var/www'
 export NGINX_SITES_ENABLED_DIR=<path to sites-enabled directory in nginx conf> # default: '/etc/nginx/sites-enabled'
-export COPY_SOURCE_DIR = <path to directory containing source files to be copied over to projects> # default: '/etc/chatops_deployer/copy'
+export DEPLOYER_COPY_SOURCE_DIR = <path to directory containing source files to be copied over to projects> # default: '/etc/chatops_deployer/copy'
+export DEPLOYER_LOG_URL = <optional URL to tail logs(if you are using something like frontail)>
+export GITHUB_WEBHOOK_SECRET = <Secret used to configure github webhook (if using github webhooks to deploy)>
+export GITHUB_OAUTH_TOKEN = <OAuth token which will be used to post comments on PRs (if using github webhooks)>
+export DEPLOYER_DEFAULT_POST_URL = <Additional HTTP endpoint where deployment success/faulure messages are posted (optional)>
 
 # Optional to use Vault for managing and distributing secrets
 export VAULT_ADDR= <address where vault server is listening>
@@ -108,6 +121,8 @@ cache:
 
 ### Deployment
 
+#### Using HTTP API endpoint
+
 To deploy an app using `chatops_deployer`, send a POST request to `chatops_deployer`
 like so :
 
@@ -139,6 +154,32 @@ Example:
   reason: 'f052f10148bd290321b84f44: Nginx error: Config directory /etc/nginx/sites-enabled does not exist'
 }
 ```
+
+#### Using Github Webhook
+
+1. Create a Github webhook
+
+Follow these instructions : https://developer.github.com/webhooks/creating/ .
+Use `<host>:<port>/gh-webhook` as the payload URL, where `host:port` is where
+chatops_deployer is running. Don't forget to set a secret when configuring the
+webhook and set it in the environment variable `GITHUB_WEBHOOK_SECRET` before
+starting chatops_deployer.
+
+2. Make sure chatops_deployer can clone the repository
+
+Create a github user solely for deploying your apps, or from your personal
+account, create a Personal Access Token. Make sure this user is added to the
+repository and can clone the repo and leave comments. Set this token in the
+environment variable `GITHUB_OAUTH_TOKEN` before starting chatops_deployer.
+
+Now whenever a Pull Request is opened, updated or closed, a new deployment will be triggered
+and chatops_deployer will leave a comment on the PR with the URLs to access
+the services deployed for the newly staged environment. This environment will
+be destroyed when the PR is closed.
+
+If you also want to get a message posted to a callback url, you can set a default
+HTTP endpoint where the status will be updated, in the environment variable:
+DEPLOYER_DEFAULT_POST_URL.
 
 ## Development
 

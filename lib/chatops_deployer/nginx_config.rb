@@ -48,14 +48,15 @@ module ChatopsDeployer
       system('service nginx reload')
     end
 
-    def readable_urls
+    def exposed_urls
       urls = {}
       @urls.each do |service, port_exposed_urls|
-        urls[service] = port_exposed_urls.collect do |port, exposed_url|
-          "http://#{exposed_url}"
+        urls[service] = {}
+        port_exposed_urls.collect do |port, exposed_url|
+          urls[service][port] = "http://#{exposed_url}"
         end
       end
-      urls.to_json
+      urls
     end
 
     def prepare_urls

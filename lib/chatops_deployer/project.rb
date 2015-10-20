@@ -49,7 +49,7 @@ module ChatopsDeployer
     def delete_repo_contents
       logger.info "Deleting contents of #{@branch_directory}"
       raise_error("Need to be in #{@branch_directory} before deleting contents") unless Dir.pwd == @branch_directory
-      FileUtils.rm_rf './*'
+      FileUtils.rm_rf '.'
     end
 
     def read_config

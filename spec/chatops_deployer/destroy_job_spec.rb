@@ -36,18 +36,11 @@ describe ChatopsDeployer::DestroyJob do
         expect(nginx_config).to receive(:logger=)
         expect(nginx_config).to receive(:remove)
 
-        stub_request(:post, callback_url)
-          .with(
-            body: {
-              status: 'destroy_success',
-              branch: branch
-            }.to_json,
-            headers: {
-              'Content-Type' => 'application/json'
-            }
-          ).to_return(status: 200)
 
-        deploy_job.perform(repository: repo, branch: branch, callback_url: callback_url)
+        fake_callback = double
+        expect(fake_callback).to receive(:destroy_success)
+          .with("branch")
+        deploy_job.perform(repository: repo, branch: branch, callbacks: [fake_callback])
       end
     end
   end

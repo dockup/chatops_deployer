@@ -44,22 +44,12 @@ describe ChatopsDeployer::DeployJob do
         expect(container).to receive(:urls).at_least(:once).and_return(urls)
         expect(nginx_config).to receive(:logger=)
         expect(nginx_config).to receive(:prepare_urls)
-        expect(nginx_config).to receive(:readable_urls).and_return(exposed_urls.to_json)
+        expect(nginx_config).to receive(:exposed_urls).and_return(exposed_urls)
         expect(nginx_config).to receive(:add_urls).with urls
 
-        stub_request(:post, callback_url)
-          .with(
-            body: {
-              status: 'deployment_success',
-              branch: branch,
-              urls: exposed_urls.to_json
-            }.to_json,
-            headers: {
-              'Content-Type' => 'application/json'
-            }
-          ).to_return(status: 200)
-
-        deploy_job.perform(repository: repo, branch: branch, callback_url: callback_url)
+        fake_callback = double
+        expect(fake_callback).to receive(:deployment_success).with("branch", exposed_urls)
+        deploy_job.perform(repository: repo, branch: branch, callbacks: [fake_callback])
       end
     end
 
@@ -73,19 +63,10 @@ describe ChatopsDeployer::DeployJob do
           .and_return project
         expect(project).to receive(:sha1).at_least(:once).and_return 'fake_sha1'
 
-        stub_request(:post, callback_url)
-          .with(
-            body: {
-              status: 'deployment_failure',
-              branch: branch,
-              reason: "Nginx error: Config directory /etc/nginx/sites-enabled does not exist"
-            }.to_json,
-            headers: {
-              'Content-Type' => 'application/json'
-            }
-          ).to_return(status: 200)
-
-        deploy_job.perform(repository: repo, branch: branch, callback_url: callback_url)
+        fake_callback = double
+        expect(fake_callback).to receive(:deployment_failure)
+          .with("branch", 'Nginx error: Config directory /etc/nginx/sites-enabled does not exist')
+        deploy_job.perform(repository: repo, branch: branch, callbacks: [fake_callback])
       end
     end
   end

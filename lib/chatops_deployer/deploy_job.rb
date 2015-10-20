@@ -1,6 +1,5 @@
 require 'sucker_punch'
 require 'fileutils'
-require 'httparty'
 require 'chatops_deployer/globals'
 require 'chatops_deployer/project'
 require 'chatops_deployer/nginx_config'
@@ -11,7 +10,7 @@ module ChatopsDeployer
   class DeployJob
     include SuckerPunch::Job
 
-    def perform(repository:, branch: 'master', config_file: 'chatops_deployer.yml', callback_url:)
+    def perform(repository:, branch: 'master', config_file: 'chatops_deployer.yml', callbacks: [])
       @branch = branch
       @project = Project.new(repository, branch, config_file)
       log_file = File.open(LOG_FILE, 'a')
@@ -40,24 +39,13 @@ module ChatopsDeployer
         @project.update_cache
       end
       @nginx_config.add_urls(@container.urls)
-      callback(callback_url, :deployment_success)
+
+      @logger.info "Succesfully deployed #{@branch}"
+      callbacks.each{|c| c.deployment_success(@branch, @nginx_config.exposed_urls)}
     rescue ChatopsDeployer::Error => e
-      @logger.error(e.message)
-      callback(callback_url, :deployment_failure, e.message)
-    end
-
-    private
-
-    def callback(callback_url, status, reason=nil)
-      body = {status: status, branch: @branch}
-      if status == :deployment_success
-        body[:urls] = @nginx_config.readable_urls
-        @logger.info "Succesfully deployed #{@branch}"
-      else
-        body[:reason] = reason
-        @logger.info "Failed deploying #{@branch}. Reason: #{reason}"
-      end
-      HTTParty.post(callback_url, body: body.to_json, headers: {'Content-Type' => 'application/json'})
+      reason = e.message
+      @logger.info "Failed deploying #{@branch}. Reason: #{reason}"
+      callbacks.each{|c| c.deployment_failure(@branch, reason)}
     end
   end
 end
