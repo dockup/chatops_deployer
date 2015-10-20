@@ -136,11 +136,11 @@ POST to this callback_url with the following data:
 1. Success callback
 
 Example:
-```json
+```ruby
 {
-  status: 'deployment_success',
-  branch: 'master',
-  urls: { web: ['misty-meadows-123.deployer-host.com'] }
+  "status": "deployment_success",
+  "branch": "master",
+  "urls": { "web" => { "3000" => "misty-meadows-123.deployer-host.com"} }
 }
 ```
 
@@ -149,9 +149,9 @@ Example:
 Example:
 ```json
 {
-  status: 'deployment_failure',
-  branch: 'master',
-  reason: 'f052f10148bd290321b84f44: Nginx error: Config directory /etc/nginx/sites-enabled does not exist'
+  "status": "deployment_failure",
+  "branch": "master",
+  "reason": "f052f10148bd290321b84f44: Nginx error: Config directory /etc/nginx/sites-enabled does not exist"
 }
 ```
 
