@@ -34,14 +34,14 @@ module ChatopsDeployer
       commands.each do |service_commands|
         service = service_commands[0]
         command = service_commands[1]
-        docker_compose_run = Command.run(command: "docker-compose -p #{@sha1} run #{service} #{command}", logger: logger)
+        docker_compose_run = Command.run(command: ["docker-compose", "-p", @sha1, "run", service, command], logger: logger)
         raise_error("docker-compose -p #{@sha1} run #{service} #{command} failed") unless docker_compose_run.success?
       end
     end
 
     def docker_compose_up
       logger.info "Running docker-compose up"
-      docker_compose = Command.run(command: "docker-compose -p #{@sha1} up -d", logger: logger)
+      docker_compose = Command.run(command: ["docker-compose", "-p", @sha1, "up", "-d"], logger: logger)
       raise_error('docker-compose up failed') unless docker_compose.success?
 
       if expose = @config['expose']
@@ -55,12 +55,12 @@ module ChatopsDeployer
 
     def docker_compose_stop
       logger.info "Stopping docker containers for project-name #{@sha1}"
-      Command.run(command: "docker-compose -p #{@sha1} stop")
+      Command.run(command: ["docker-compose", "-p", @sha1, "stop"], logger: logger)
     end
 
     def get_ip_of_service(service)
-      container_id_command = Command.run(command: "docker-compose -p #{@sha1} ps -q #{service}", logger: logger)
-      ip_command = Command.run(command: "docker inspect --format='{{.NetworkSettings.IPAddress}}' #{container_id_command.output}", logger: logger)
+      container_id_command = Command.run(command: ["docker-compose", "-p", @sha1, "ps", "-q", service], logger: logger)
+      ip_command = Command.run(command: ["docker", "inspect", "--format='{{.NetworkSettings.IPAddress}}'", container_id_command.output], logger: logger)
       raise_error("Cannot find ip of service #{service}") unless ip_command.success?
       ip_command.output.chomp
     end
