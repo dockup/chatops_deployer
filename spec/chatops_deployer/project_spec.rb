@@ -3,8 +3,9 @@ require 'chatops_deployer/project'
 describe ChatopsDeployer::Project do
   let(:repo) { 'https://github.com/code-mancers/app.git' }
   let(:project) { ChatopsDeployer::Project.new(repo, 'branch') }
+  before { project.setup_directory }
 
-  describe "initialize" do
+  describe "setup_directory" do
     it 'creates the project and branch directories' do
       branch_dir = File.join(ChatopsDeployer::WORKSPACE, 'code-mancers/app/repositories/branch')
       project_dir = File.join(ChatopsDeployer::WORKSPACE, 'code-mancers/app')
@@ -37,23 +38,14 @@ describe ChatopsDeployer::Project do
         project.fetch_repo
       end
     end
+  end
 
-    context 'when directory is not empty' do
-      it 'removes everything and clones again' do
-        dummy_file = File.join project.branch_directory, 'dummy'
-        File.open(dummy_file, 'w')
-
-        git_command = ["git", "clone", "--branch=branch", "--depth=1", repo, "."]
-        expect(ChatopsDeployer::Command).to receive(:run)
-          .with(command: git_command, logger: project.logger) do
-          double(:command, success?: true)
-        end
-        Dir.chdir project.branch_directory
-        project.fetch_repo
-        expect(Dir.entries('.').size).to eql 2
-      end
+  describe '#delete_repo' do
+    it 'deletes the branch directory' do
+      expect(Dir.exists?(project.branch_directory)).to be_truthy
+      project.delete_repo
+      expect(Dir.exists?(project.branch_directory)).to be_falsey
     end
-
   end
 
   describe '#read_config' do

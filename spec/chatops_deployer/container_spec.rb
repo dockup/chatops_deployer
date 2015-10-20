@@ -12,7 +12,7 @@ describe ChatopsDeployer::Container do
           volumes:
             - .:/myapp
           ports:
-            - "3000:3001"
+            - "3000"
           links:
             - db
       EOM
@@ -36,47 +36,26 @@ describe ChatopsDeployer::Container do
   let(:container) { ChatopsDeployer::Container.new(project) }
 
   describe '#build' do
-    before do
+    it 'uses docker-compose create the environment' do
       expect(ChatopsDeployer::Command).to receive(:run)
-        .with(command: 'docker-machine ip fake_sha1', logger: container.logger)
-        .and_return double(:command, success?: true, output: '1.2.3.4')
-
-      fake_env = <<-STR
-      export KEY1="VALUE1"
-      export KEY2="VALUE2"
-      # some comment
-      STR
-      expect(ChatopsDeployer::Command).to receive(:run)
-        .with(command: 'docker-machine env fake_sha1', logger: container.logger)
-        .and_return double(:command, success?: true, output: fake_env)
-
-
-      expect(ChatopsDeployer::Command).to receive(:run)
-        .with(command: 'docker-compose port web 3000', logger: container.logger)
-        .and_return double(:command, success?: true, output: '0.0.0.0:3001')
-      ChatopsDeployer::REGISTRY_MIRROR = "http://mirror"
-    end
-    it 'creates a VM with docker machine' do
-      expect(ChatopsDeployer::Command).to receive(:run)
-        .with(command: 'docker-machine url fake_sha1', logger: container.logger)
-        .and_return double(:command, success?: false)
-      expect(ChatopsDeployer::Command).to receive(:run)
-        .with(command: 'docker-machine create --driver virtualbox fake_sha1 --engine-registry-mirror=http://mirror', logger: container.logger)
-      expect(ChatopsDeployer::Command).to receive(:run)
-        .with(command: 'docker-compose run web bundle exec rake db:create', logger: container.logger)
+        .with(command: 'docker-compose -p fake_sha1 run web bundle exec rake db:create', logger: container.logger)
         .and_return double(:command, success?: true)
       expect(ChatopsDeployer::Command).to receive(:run)
-        .with(command: 'docker-compose run web bundle exec rake db:schema:load', logger: container.logger)
+        .with(command: 'docker-compose -p fake_sha1 run web bundle exec rake db:schema:load', logger: container.logger)
         .and_return double(:command, success?: true)
       expect(ChatopsDeployer::Command).to receive(:run)
-        .with(command: 'docker-compose up -d', logger: container.logger)
+        .with(command: 'docker-compose -p fake_sha1 up -d', logger: container.logger)
         .and_return double(:command, success?: true)
+      expect(ChatopsDeployer::Command).to receive(:run)
+        .with(command: 'docker-compose -p fake_sha1 ps -q web', logger: container.logger)
+        .and_return double(:command, success?: true, output: 'fake_container_id')
+      expect(ChatopsDeployer::Command).to receive(:run)
+        .with(command: "docker inspect --format='{{.NetworkSettings.IPAddress}}' fake_container_id", logger: container.logger)
+        .and_return double(:command, success?: true, output: 'docker_ip')
 
       container.build
 
-      expect(ENV['KEY1']).to eql 'VALUE1'
-      expect(ENV['KEY2']).to eql 'VALUE2'
-      expect(container.urls).to eql({'web' => [['1.2.3.4','3001']]})
+      expect(container.urls).to eql({'web' => [['docker_ip','3000']]})
     end
   end
 end

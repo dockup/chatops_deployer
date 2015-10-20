@@ -8,10 +8,8 @@ in docker containers. Meant to be used with hubot.
 **All commands need to be run as the root user**
 So it's best if you can run this on a dedicated disposable server.
 
-1. virtualbox - For creating isolated VMs for each project
-3. docker-machine - For starting docker daemons on VMs
-2. docker-compose - For running multi-container apps using docker daemons on VMs
-4. nginx - For setting up a subdomain for each deployment
+1. docker-compose - For running multi-container apps
+2. nginx - For setting up a subdomain for each deployment
 
 TODO: setup script to install requirements on Ubuntu 14.04
 
@@ -28,7 +26,6 @@ export DEPLOYER_HOST=<hostname where nginx listens>
 export WORKSPACE=<path where you want your projects to be git-cloned> # default: '/var/www'
 export NGINX_SITES_ENABLED_DIR=<path to sites-enabled directory in nginx conf> # default: '/etc/nginx/sites-enabled'
 export COPY_SOURCE_DIR = <path to directory containing source files to be copied over to projects> # default: '/etc/chatops_deployer/copy'
-export DEPLOYER_REGISTRY_MIRROR = <URL of docker registry mirror if you want to make use of faster docker image pulls> # default: nil
 
 # Optional to use Vault for managing and distributing secrets
 export VAULT_ADDR= <address where vault server is listening>

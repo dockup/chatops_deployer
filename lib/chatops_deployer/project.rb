@@ -15,25 +15,41 @@ module ChatopsDeployer
     attr_reader :sha1, :branch_directory, :config
     attr_accessor :env
     def initialize(repository, branch, config_file="chatops_deployer.yml")
-      @sha1 = Digest::SHA1.hexdigest(repository + branch)
       @repository = repository
       @branch = branch
       @config_file = config_file
       @env = {}
-      setup_project_directory
+
+      matchdata = @repository.match(/.*github.com\/(.*)\/(.*).git/)
+      raise_error("Bad github repository: #{@repository}") if matchdata.nil?
+      org, repo = matchdata.captures
+      @sha1 = Digest::SHA1.hexdigest(org + repo + branch)
+      @branch_directory = File.join(WORKSPACE, org, repo, 'repositories', @branch)
+      @project_directory = File.join(WORKSPACE, org, repo)
+      @common_cache_dir = File.join(@project_directory, 'cache')
     end
 
     def fetch_repo
-      logger.info "Fetching #{@repository}:#{@branch}"
-      unless Dir.entries('.').size == 2
-        logger.info "Branch already cloned. Deleting everything before cloning again"
-        FileUtils.rm_rf '.'
-      end
       logger.info "Cloning branch #{@repository}:#{@branch}"
       git_clone = Command.run(command: ['git', 'clone', "--branch=#{@branch}", '--depth=1', @repository, '.'], logger: logger)
       unless git_clone.success?
         raise_error("Cannot clone git repository: #{@repository}, branch: #{@branch}")
       end
+    end
+
+    def delete_repo
+      logger.info "Deleting #{@repository}:#{@branch}"
+      FileUtils.rm_rf @branch_directory
+    end
+
+    def cloned?
+      Dir.entries('.').size > 2
+    end
+
+    def delete_repo_contents
+      logger.info "Deleting contents of #{@branch_directory}"
+      raise_error("Need to be in #{@branch_directory} before deleting contents") unless Dir.pwd == @branch_directory
+      FileUtils.rm_rf './*'
     end
 
     def read_config
@@ -98,18 +114,12 @@ module ChatopsDeployer
       end
     end
 
-    private
-
-    def setup_project_directory
-      matchdata = @repository.match(/.*github.com\/(.*)\/(.*).git/)
-      raise_error("Bad github repository: #{@repository}") if matchdata.nil?
-      org, repo = matchdata.captures
-      @branch_directory = File.join(WORKSPACE, org, repo, 'repositories', @branch)
-      @project_directory = File.join(WORKSPACE, org, repo)
-      @common_cache_dir = File.join(@project_directory, 'cache')
+    def setup_directory
       FileUtils.mkdir_p @branch_directory
       FileUtils.mkdir_p @common_cache_dir
     end
+
+    private
 
     def raise_error(message)
       raise Error, "Project error: #{message}"

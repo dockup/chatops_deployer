@@ -25,7 +25,12 @@ module ChatopsDeployer
         obj.logger = @logger
       end
 
+      @project.setup_directory
       Dir.chdir(@project.branch_directory) do
+        if @project.cloned?
+          @container.destroy
+          @project.delete_repo_contents
+        end
         @project.fetch_repo
         @project.read_config
         @nginx_config.prepare_urls

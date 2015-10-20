@@ -2,6 +2,7 @@ require 'sinatra'
 require 'net/http'
 require 'json'
 require 'chatops_deployer/deploy_job'
+require 'chatops_deployer/destroy_job'
 require 'fileutils'
 
 module ChatopsDeployer
