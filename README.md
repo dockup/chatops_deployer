@@ -1,7 +1,12 @@
 # ChatopsDeployer
 
-A lightweight Sinatra app that deploys staging apps of git branches
-in docker containers.
+A lightweight Sinatra app that deploys staging apps of git branches in docker containers.
+
+Automatically when you submit pull requests:
+![github-webhook](https://s3-ap-southeast-1.amazonaws.com/uploads-ap.hipchat.com/39906/538857/k7WU2wiVbLzQMu6/upload.png "Github Webhook")
+
+Or whenever you feel like:
+![chatops](https://s3-ap-southeast-1.amazonaws.com/uploads-ap.hipchat.com/39906/538857/YFBfOlZATG5ESNx/upload_censored.jpg "Chatops")
 
 Features:
 
