@@ -30,7 +30,29 @@ TODO: setup script to install requirements on Ubuntu 14.04
 ## Installation
 
     $ gem install chatops_deployer
+    
+### Server setup
 
+1. Add the Github OAuth token to `~/.netrc`:
+    
+        machine github.com login <oauth_token> password
+    
+2. Disable prompt when cloning repositories by adding this to `~/.ssh/config`:
+
+        Host github.com
+        StrictHostKeyChecking no
+    
+3. Create an ssh key-pair and add it to your github user:    
+
+        ssh-keygen
+        # Copy ~/.ssh/id_rsa.pub and add it to keys of the github account
+    
+4. Setup frontail
+Frontail is a node module which will tail your logs and expose it over an HTTP endpoint
+which you can see in your browser. `npm install -g frontail` and `frontail /var/logs/chatops_deployer.log`
+
+5. `docker login` (if pulling private docker images)
+    
 ## Usage
 
 Set the following ENV vars:
@@ -54,7 +76,7 @@ And run the server as the root user:
 
     $ chatops_deployer
 
-### Configuration
+### App Configuration
 
 To configure an app for deployment using chatops_deployer API, you need to follow the following steps:
 
