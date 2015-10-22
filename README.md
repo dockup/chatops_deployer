@@ -148,6 +148,11 @@ cache:
 
 ### Deployment
 
+#### Using hubot
+
+Use the [hubot-chatops](https://github.com/code-mancers/hubot-chatops) plugin to talk to
+chatops_deployer from your chat room.
+
 #### Using HTTP API endpoint
 
 To deploy an app using `chatops_deployer`, send a POST request to `chatops_deployer`
@@ -186,18 +191,18 @@ Example:
 
 1. Create a Github webhook
 
-Follow these instructions : https://developer.github.com/webhooks/creating/ .
-Use `<host>:<port>/gh-webhook` as the payload URL, where `host:port` is where
-chatops_deployer is running. Don't forget to set a secret when configuring the
-webhook and set it in the environment variable `GITHUB_WEBHOOK_SECRET` before
-starting chatops_deployer.
+  Follow these instructions : https://developer.github.com/webhooks/creating/ .
+  Use `<host>:<port>/gh-webhook` as the payload URL, where `host:port` is where
+  chatops_deployer is running. Don't forget to set a secret when configuring the
+  webhook and set it in the environment variable `GITHUB_WEBHOOK_SECRET` before
+  starting chatops_deployer.
 
 2. Make sure chatops_deployer can clone the repository
 
-Create a github user solely for deploying your apps, or from your personal
-account, create a Personal Access Token. Make sure this user is added to the
-repository and can clone the repo and leave comments. Set this token in the
-environment variable `GITHUB_OAUTH_TOKEN` before starting chatops_deployer.
+  Create a github user solely for deploying your apps, or from your personal
+  account, create a Personal Access Token. Make sure this user is added to the
+  repository and can clone the repo and leave comments. Set this token in the
+  environment variable `GITHUB_OAUTH_TOKEN` before starting chatops_deployer.
 
 Now whenever a Pull Request is opened, updated or closed, a new deployment will be triggered
 and chatops_deployer will leave a comment on the PR with the URLs to access
