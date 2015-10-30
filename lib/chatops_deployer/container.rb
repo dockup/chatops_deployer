@@ -61,7 +61,7 @@ module ChatopsDeployer
 
     def docker_compose_rm
       logger.info "Removing docker containers for project-name #{@sha1}"
-      Command.run(command: ["docker-compose", "-p", @sha1, "rm", "-f"], logger: logger)
+      Command.run(command: ["docker-compose", "-p", @sha1, "rm", "-f", "-v"], logger: logger)
     end
 
     def get_ip_of_service(service)
