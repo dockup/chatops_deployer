@@ -54,7 +54,7 @@ module ChatopsDeployer
         branch = payload['pull_request']['head']['ref']
 
         case payload['action']
-        when 'open', 'synchronize', 'reopen'
+        when 'opened', 'synchronize', 'reopened'
           callbacks = [GithubCommentCallback.new(comments_url)]
           callbacks.push(WebhookCallback.new(DEFAULT_POST_URL)) if DEFAULT_POST_URL
           DeployJob.new.async.perform(
