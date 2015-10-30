@@ -206,7 +206,7 @@ Example:
 
 Now whenever a Pull Request is opened, updated or closed, a new deployment will be triggered
 and chatops_deployer will leave a comment on the PR with the URLs to access
-the services deployed for the newly staged environment. This environment will
+the services deployed for the newly deployed environment. This environment will
 be destroyed when the PR is closed.
 
 If you also want to get a message posted to a callback url, you can set a default

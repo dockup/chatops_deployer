@@ -14,7 +14,7 @@ module ChatopsDeployer
           "[#{service} (port: #{port})](#{url})"
         end.join(', ')
       end.join(', ')
-      body = "Staged branch #{branch} at url: #{links}"
+      body = "Deployed branch #{branch} at url: #{links}"
       HTTParty.post(@comments_url, body: {body: body}.to_json, headers: {
         'Authorization' => "token #{GITHUB_OAUTH_TOKEN}",
         'User-Agent' => 'chatops_deployer' #Mandatory field, just passing random value
@@ -22,7 +22,7 @@ module ChatopsDeployer
     end
 
     def deployment_failure(branch, reason)
-      body = "Could not stage branch: #{branch}. Reason: #{reason}."
+      body = "Could not deploy branch: #{branch}. Reason: #{reason}."
       HTTParty.post(@comments_url, body: {body: body}.to_json, headers: {
         'Authorization' => "token #{GITHUB_OAUTH_TOKEN}",
         'User-Agent' => 'chatops_deployer' #Mandatory field, just passing random value

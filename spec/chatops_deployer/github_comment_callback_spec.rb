@@ -20,7 +20,7 @@ describe ChatopsDeployer::GithubCommentCallback do
       stub_request(:post, endpoint)
         .with(
           body: {
-            body: "Staged branch branch at url: [web (port: 3000)](url1), [web (port: 3001)](url2), [db (port: 1234)](url3)"
+            body: "Deployed branch branch at url: [web (port: 3000)](url1), [web (port: 3001)](url2), [db (port: 1234)](url3)"
           }.to_json,
           headers: {
             'Authorization'=>'token fake_token',
@@ -36,7 +36,7 @@ describe ChatopsDeployer::GithubCommentCallback do
       stub_request(:post, endpoint)
         .with(
           body: {
-            body: "Could not stage branch: branch. Reason: failure_reason."
+            body: "Could not deploy branch: branch. Reason: failure_reason."
           }.to_json,
           headers: {
             'Authorization'=>'token fake_token',
