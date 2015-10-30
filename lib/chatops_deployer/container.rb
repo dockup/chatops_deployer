@@ -24,6 +24,7 @@ module ChatopsDeployer
 
     def destroy
       docker_compose_stop
+      docker_compose_rm
     end
 
     private
@@ -56,6 +57,11 @@ module ChatopsDeployer
     def docker_compose_stop
       logger.info "Stopping docker containers for project-name #{@sha1}"
       Command.run(command: ["docker-compose", "-p", @sha1, "stop"], logger: logger)
+    end
+
+    def docker_compose_rm
+      logger.info "Removing docker containers for project-name #{@sha1}"
+      Command.run(command: ["docker-compose", "-p", @sha1, "rm", "-f"], logger: logger)
     end
 
     def get_ip_of_service(service)
