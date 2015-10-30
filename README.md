@@ -30,7 +30,29 @@ TODO: setup script to install requirements on Ubuntu 14.04
 ## Installation
 
     $ gem install chatops_deployer
+    
+### Server setup
 
+1. Add the Github OAuth token to `~/.netrc`:
+    
+        machine github.com login <oauth_token> password
+    
+2. Disable prompt when cloning repositories by adding this to `~/.ssh/config`:
+
+        Host github.com
+        StrictHostKeyChecking no
+    
+3. Create an ssh key-pair and add it to your github user:    
+
+        ssh-keygen
+        # Copy ~/.ssh/id_rsa.pub and add it to keys of the github account
+    
+4. Setup frontail
+Frontail is a node module which will tail your logs and expose it over an HTTP endpoint
+which you can see in your browser. `npm install -g frontail` and `frontail /var/logs/chatops_deployer.log`
+
+5. `docker login` (if pulling private docker images)
+    
 ## Usage
 
 Set the following ENV vars:
@@ -54,7 +76,7 @@ And run the server as the root user:
 
     $ chatops_deployer
 
-### Configuration
+### App Configuration
 
 To configure an app for deployment using chatops_deployer API, you need to follow the following steps:
 
@@ -126,6 +148,11 @@ cache:
 
 ### Deployment
 
+#### Using hubot
+
+Use the [hubot-chatops](https://github.com/code-mancers/hubot-chatops) plugin to talk to
+chatops_deployer from your chat room.
+
 #### Using HTTP API endpoint
 
 To deploy an app using `chatops_deployer`, send a POST request to `chatops_deployer`
@@ -164,18 +191,18 @@ Example:
 
 1. Create a Github webhook
 
-Follow these instructions : https://developer.github.com/webhooks/creating/ .
-Use `<host>:<port>/gh-webhook` as the payload URL, where `host:port` is where
-chatops_deployer is running. Don't forget to set a secret when configuring the
-webhook and set it in the environment variable `GITHUB_WEBHOOK_SECRET` before
-starting chatops_deployer.
+  Follow these instructions : https://developer.github.com/webhooks/creating/ .
+  Use `<host>:<port>/gh-webhook` as the payload URL, where `host:port` is where
+  chatops_deployer is running. Don't forget to set a secret when configuring the
+  webhook and set it in the environment variable `GITHUB_WEBHOOK_SECRET` before
+  starting chatops_deployer.
 
 2. Make sure chatops_deployer can clone the repository
 
-Create a github user solely for deploying your apps, or from your personal
-account, create a Personal Access Token. Make sure this user is added to the
-repository and can clone the repo and leave comments. Set this token in the
-environment variable `GITHUB_OAUTH_TOKEN` before starting chatops_deployer.
+  Create a github user solely for deploying your apps, or from your personal
+  account, create a Personal Access Token. Make sure this user is added to the
+  repository and can clone the repo and leave comments. Set this token in the
+  environment variable `GITHUB_OAUTH_TOKEN` before starting chatops_deployer.
 
 Now whenever a Pull Request is opened, updated or closed, a new deployment will be triggered
 and chatops_deployer will leave a comment on the PR with the URLs to access
