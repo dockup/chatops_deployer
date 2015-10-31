@@ -18,6 +18,7 @@ module ChatopsDeployer
 
     def build
       @config = @project.config
+      docker_compose_build
       docker_compose_run_commands
       docker_compose_up
     end
@@ -28,6 +29,12 @@ module ChatopsDeployer
     end
 
     private
+
+    def docker_compose_build
+      logger.info "Building images"
+      build_command = Command.run(command: ["docker-compose", "-p", @sha1, "build"], logger: logger)
+      raise_error("docker-compose -p #{@sha1} build failed") unless build_command.success?
+    end
 
     def docker_compose_run_commands
       logger.info "Running commands on containers"
