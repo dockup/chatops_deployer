@@ -39,6 +39,10 @@ module ChatopsDeployer
     def docker_compose_run_commands
       logger.info "Running commands on containers"
       commands = @config['commands']
+      unless commands
+        logger.info "No commands to run"
+        return
+      end
       commands.each do |service_commands|
         service = service_commands[0]
         command = service_commands[1]
