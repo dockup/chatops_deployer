@@ -37,6 +37,20 @@ module ChatopsDeployer
       end
     end
 
+    def validate_configs
+      return_status = true
+      unless File.exists?(@config_file)
+        logger.info "#{@config_file} not found in branch #{@branch} of #{@repository}"
+        return_status = return_status && false
+      end
+
+      unless File.exists?('docker-compose.yml')
+        logger.info "docker-compose.yml not found in branch #{@branch} of #{@repository}"
+        return_status = return_status && false
+      end
+      return_status
+    end
+
     def delete_repo
       logger.info "Deleting #{@repository}:#{@branch}"
       FileUtils.rm_rf @branch_directory

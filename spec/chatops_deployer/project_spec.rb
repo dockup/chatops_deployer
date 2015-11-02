@@ -290,4 +290,35 @@ describe ChatopsDeployer::Project do
       end
     end
   end
+
+  describe '#validate_configs' do
+    subject { project.validate_configs }
+    before do
+      Dir.chdir project.branch_directory
+      File.open('chatops_deployer.yml', 'w')
+      File.open('docker-compose.yml', 'w')
+    end
+
+    context 'when chatops_deployer.yml does not exist' do
+      before { File.delete 'chatops_deployer.yml' }
+      it { is_expected.to be_falsey }
+    end
+
+    context 'when docker-compose.yml does not exist' do
+      before { File.delete 'docker-compose.yml' }
+      it { is_expected.to be_falsey }
+    end
+
+    context 'when neither chatops_deployer nor docker-compose exists' do
+      before do
+        File.delete 'chatops_deployer.yml'
+        File.delete 'docker-compose.yml'
+      end
+      it { is_expected.to be_falsey }
+    end
+
+    context 'when both chatops_deployer and docker-compose exist' do
+      it { is_expected.to be_truthy }
+    end
+  end
 end

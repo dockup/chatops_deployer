@@ -32,6 +32,7 @@ describe ChatopsDeployer::DeployJob do
         expect(project).to receive(:cloned?).and_return false
         expect(project).to receive(:setup_directory)
         expect(project).to receive(:fetch_repo)
+        expect(project).to receive(:validate_configs).and_return(true)
         expect(project).to receive(:read_config)
         expect(project).to receive(:copy_files_from_deployer)
         expect(project).to receive(:setup_cache_directories)
