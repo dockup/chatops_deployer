@@ -79,11 +79,25 @@ export VAULT_ADDR=https://<vault server url>
 export VAULT_CACERT=vault.crt
 export VAULT_TOKEN=<token generated in step 2>
 
-Write secrets with the following command :
+Now you shoud be able to set secrets for `myapp-staging`:
 
+Create a file with secrets in JSON format:
+
+```javascript
+// secrets.json
+{
+  "SECRET_KEY_1": "SECRET_VALUE_1",
+  "SECRET_KEY_2": "SECRET_VALUE_2"
+}
 ```
-vault write secret/myapp-staging/SECRET_KEY value=SECRET_VALUE
+
+Now write the secrets to Vault:
+
+```bash
+vault write secret/myapp-staging @secrets.json
 ```
+
+Note: The `@` before the JSON filename is required.
 
 ## 4. Use secrets in `copy` files
 
@@ -99,7 +113,7 @@ copy:
 ```
 # config/secrets.staging.yml.erb
 staging:
-  SECRET_KEY: <%= vault.read('secret/myapp-staging/SECRET_KEY', 'value') %>
+  SECRET_KEY_1: <%= vault.read('secret/myapp-staging', 'SECRET_KEY_1') %>
 ```
 
 chatops_deployer will expand the ERB tag by reading the secret from Vault and
