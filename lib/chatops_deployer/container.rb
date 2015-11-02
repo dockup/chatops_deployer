@@ -73,7 +73,10 @@ module ChatopsDeployer
 
     def docker_compose_delete_volumes
       services = @config['purge_volumes']
-      return unless services
+      unless services
+        logger.info "None of the services need their volumes purged"
+        return
+      end
       services.each do |service|
         logger.info "Removing docker containers and volumes for container #{service}"
         Command.run(command: ["docker-compose", "-p", @sha1, "rm", "-f", "-v", service], logger: logger)
