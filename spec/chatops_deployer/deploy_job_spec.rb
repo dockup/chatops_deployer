@@ -32,7 +32,6 @@ describe ChatopsDeployer::DeployJob do
         expect(project).to receive(:cloned?).and_return false
         expect(project).to receive(:setup_directory)
         expect(project).to receive(:fetch_repo)
-        expect(project).to receive(:validate_configs).and_return(true)
         expect(project).to receive(:read_config)
         expect(project).to receive(:copy_files_from_deployer)
         expect(project).to receive(:setup_cache_directories)
@@ -54,7 +53,7 @@ describe ChatopsDeployer::DeployJob do
       end
     end
 
-    context 'error scenario - when nginx config directory is non existent' do
+    context 'when an error occurs' do
       let(:repo) { 'fake_repo' }
       let(:branch) { 'branch' }
       let(:callback_url) { 'http://example.com/callback' }
@@ -63,10 +62,12 @@ describe ChatopsDeployer::DeployJob do
         expect(ChatopsDeployer::Project).to receive(:new).with(repo, branch, 'chatops_deployer.yml')
           .and_return project
         expect(project).to receive(:sha1).at_least(:once).and_return 'fake_sha1'
+        fake_error = ChatopsDeployer::Error.new('failed!')
+        expect(ChatopsDeployer::NginxConfig).to receive(:new).and_raise fake_error
 
         fake_callback = double
         expect(fake_callback).to receive(:deployment_failure)
-          .with("branch", 'Nginx error: Config directory /etc/nginx/sites-enabled does not exist')
+          .with("branch", fake_error)
         deploy_job.perform(repository: repo, branch: branch, callbacks: [fake_callback])
       end
     end

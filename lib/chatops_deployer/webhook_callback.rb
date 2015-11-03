@@ -16,9 +16,9 @@ module ChatopsDeployer
       HTTParty.post(@post_url, body: body.to_json, headers: {'Content-Type' => 'application/json'})
     end
 
-    def deployment_failure(branch, reason)
+    def deployment_failure(branch, error)
       body = {
-        reason: reason,
+        reason: error.message,
         status: :deployment_failure,
         branch: branch
       }
@@ -33,9 +33,9 @@ module ChatopsDeployer
       HTTParty.post(@post_url, body: body.to_json, headers: {'Content-Type' => 'application/json'})
     end
 
-    def destroy_failure(branch, reason)
+    def destroy_failure(branch, error)
       body = {
-        reason: reason,
+        reason: error.message,
         status: :destroy_failure,
         branch: branch
       }
