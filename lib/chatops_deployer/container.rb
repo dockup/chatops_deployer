@@ -24,6 +24,8 @@ module ChatopsDeployer
     end
 
     def destroy
+      @project.read_config
+      @config = @project.config
       docker_compose_stop
       docker_compose_delete_volumes
       docker_compose_rm
