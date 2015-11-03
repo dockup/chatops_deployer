@@ -3,9 +3,11 @@ require 'webmock/rspec'
 
 describe ChatopsDeployer::GithubCommentCallback do
   let(:endpoint) { 'http://fake-endpoint' }
+  let(:default_post_url) { 'http://default-post-url' }
   let(:callback) { ChatopsDeployer::GithubCommentCallback.new(endpoint) }
   before do
     ChatopsDeployer::GITHUB_OAUTH_TOKEN = 'fake_token'
+    ChatopsDeployer::DEFAULT_POST_URL = default_post_url
   end
 
   describe '#deployment_success' do
@@ -16,7 +18,19 @@ describe ChatopsDeployer::GithubCommentCallback do
       }
     end
 
-    it 'sends an HTTP POST request to the comments_url with markdown comment text' do
+    it 'sends an HTTP POST request to the comments_url with markdown comment text and DEFAULT_POST_URL' do
+      stub_request(:post, default_post_url)
+        .with(
+          body: {
+            urls: exposed_urls.to_json,
+            status: 'deployment_success',
+            branch: 'branch'
+          }.to_json,
+          headers: {
+            'Content-Type' => 'application/json'
+          }
+        ).to_return(status: 200)
+
       stub_request(:post, endpoint)
         .with(
           body: {
@@ -32,7 +46,19 @@ describe ChatopsDeployer::GithubCommentCallback do
   end
 
   describe '#deployment_failure' do
-    it 'sends an HTTP POST request to the callback url with failure reason' do
+    it 'sends an HTTP POST request to comments_url and DEFAULT_POST_URL with failure reason' do
+      stub_request(:post, default_post_url)
+        .with(
+          body: {
+            reason: 'failure_reason',
+            status: 'deployment_failure',
+            branch: 'branch'
+          }.to_json,
+          headers: {
+            'Content-Type' => 'application/json'
+          }
+        ).to_return(status: 200)
+
       stub_request(:post, endpoint)
         .with(
           body: {
@@ -43,8 +69,16 @@ describe ChatopsDeployer::GithubCommentCallback do
             'User-Agent'=>'chatops_deployer'
           }
         ).to_return(status: 200)
-      callback.deployment_failure('branch', 'failure_reason')
+      callback.deployment_failure('branch', instance_double("Error", message: 'failure_reason'))
+    end
+
+    context 'when the error is about not having config files for deployment' do
+      it 'ignores the error and does not make any HTTP requests' do
+        error = ChatopsDeployer::Project::ConfigNotFoundError.new('failure_reason')
+        callback.deployment_failure('branch', error)
+        expect(WebMock).not_to have_requested(:post, default_post_url)
+        expect(WebMock).not_to have_requested(:post, endpoint)
+      end
     end
   end
 end
-

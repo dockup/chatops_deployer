@@ -31,7 +31,6 @@ module ChatopsDeployer
           @project.delete_repo_contents
         end
         @project.fetch_repo
-        return unless @project.validate_configs
         @project.read_config
         @nginx_config.prepare_urls
         @project.copy_files_from_deployer
@@ -46,7 +45,7 @@ module ChatopsDeployer
     rescue ChatopsDeployer::Error => e
       reason = e.message
       @logger.info "Failed deploying #{@branch}. Reason: #{reason}"
-      callbacks.each{|c| c.deployment_failure(@branch, reason)}
+      callbacks.each{|c| c.deployment_failure(@branch, e)}
     end
   end
 end

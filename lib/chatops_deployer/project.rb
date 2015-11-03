@@ -11,6 +11,7 @@ module ChatopsDeployer
   class Project
     include Logger
     class Error < ChatopsDeployer::Error; end
+    class ConfigNotFoundError < Error; end
 
     attr_reader :sha1, :branch_directory, :config
     attr_accessor :env
@@ -37,20 +38,6 @@ module ChatopsDeployer
       end
     end
 
-    def validate_configs
-      return_status = true
-      unless File.exists?(@config_file)
-        logger.info "#{@config_file} not found in branch #{@branch} of #{@repository}"
-        return_status = return_status && false
-      end
-
-      unless File.exists?('docker-compose.yml')
-        logger.info "docker-compose.yml not found in branch #{@branch} of #{@repository}"
-        return_status = return_status && false
-      end
-      return_status
-    end
-
     def delete_repo
       logger.info "Deleting #{@repository}:#{@branch}"
       FileUtils.rm_rf @branch_directory
@@ -67,6 +54,7 @@ module ChatopsDeployer
     end
 
     def read_config
+      raise ConfigNotFoundError, "Cannot find #{@config_file}." unless validate_configs
       @config = if File.exists?(@config_file)
         begin
           YAML.load_file(@config_file) || {}
@@ -134,6 +122,15 @@ module ChatopsDeployer
     end
 
     private
+
+    def validate_configs
+      unless File.exists?(@config_file)
+        logger.info "#{@config_file} not found in branch #{@branch} of #{@repository}"
+        false
+      else
+        true
+      end
+    end
 
     def raise_error(message)
       raise Error, "Project error: #{message}"

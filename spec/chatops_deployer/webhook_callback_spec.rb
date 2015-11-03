@@ -42,7 +42,7 @@ describe ChatopsDeployer::WebhookCallback do
             'Content-Type' => 'application/json'
           }
         ).to_return(status: 200)
-      callback.deployment_failure('branch', 'failure_reason')
+      callback.deployment_failure('branch', instance_double("Error", message: 'failure_reason'))
     end
   end
 
@@ -75,7 +75,7 @@ describe ChatopsDeployer::WebhookCallback do
             'Content-Type' => 'application/json'
           }
         ).to_return(status: 200)
-      callback.destroy_failure('branch', 'failure_reason')
+      callback.destroy_failure('branch', instance_double("Error", message: 'failure_reason'))
     end
   end
 end

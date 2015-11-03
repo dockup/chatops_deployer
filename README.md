@@ -27,32 +27,28 @@ So it's best if you can run this on a dedicated disposable server.
 
 TODO: setup script to install requirements on Ubuntu 14.04
 
-## Installation
-
-    $ gem install chatops_deployer
-    
 ### Server setup
 
 1. Add the Github OAuth token to `~/.netrc`:
-    
+
         machine github.com login <oauth_token> password
-    
+
 2. Disable prompt when cloning repositories by adding this to `~/.ssh/config`:
 
         Host github.com
-        StrictHostKeyChecking no
-    
+          StrictHostKeyChecking no
+
 3. Create an ssh key-pair and add it to your github user:    
 
         ssh-keygen
         # Copy ~/.ssh/id_rsa.pub and add it to keys of the github account
-    
+
 4. Setup frontail
 Frontail is a node module which will tail your logs and expose it over an HTTP endpoint
 which you can see in your browser. `npm install -g frontail` and `frontail /var/logs/chatops_deployer.log`
 
 5. `docker login` (if pulling private docker images)
-    
+
 ## Usage
 
 Set the following ENV vars:
@@ -66,6 +62,8 @@ export DEPLOYER_LOG_URL = <optional URL to tail logs(if you are using something 
 export GITHUB_WEBHOOK_SECRET = <Secret used to configure github webhook (if using github webhooks to deploy)>
 export GITHUB_OAUTH_TOKEN = <OAuth token which will be used to post comments on PRs (if using github webhooks)>
 export DEPLOYER_DEFAULT_POST_URL = <Additional HTTP endpoint where deployment success/faulure messages are posted (optional)>
+export DEPLOYER_DATA_CONTAINER_NAME = <Name of docker container that will be used for sharing data between deployments> # default: 'cache'
+export DEPLOYER_DATA_CONTAINER_VOLUME = <Path of volume inside the data container that can be mounted on other containers> # default: '/cache'
 
 # Optional to use Vault for managing and distributing secrets
 export VAULT_ADDR= <address where vault server is listening>
@@ -74,7 +72,10 @@ export VAULT_CACERT= <CA certificate file to verify vault server SSL certificate
 ```
 And run the server as the root user:
 
-    $ chatops_deployer
+    $ git clone https://github.com/code-mancers/chatops_deployer.git
+    $ cd chatops_deployer
+    $ bundle install
+    $ ruby exe/chatops_deployer
 
 ### App Configuration
 
@@ -86,6 +87,9 @@ Add a `docker-compose.yml` file inside the root of the app that can run the app
 and the dependent services as docker containers using the command `docker-compose up`.
 Refer [the docker compose docs](https://docs.docker.com/compose/) to learn how
 to prepare this file for your app.
+
+Note: Any setup that is required for your app should go into either Dockerfile
+or `commands` section of chatops_deployer.yml.
 
 #### 2. Add chatops_deployer.yml
 
@@ -130,21 +134,33 @@ commands:
 # using the command `vault read -field=value secret/app-name/AWS_SECRET_KEY`
 copy:
   - "./config.dev.env.erb:config.env"
-
-# `cache` is a hash in the format <directory_in_code>: {<service>: <directory_in_service>}
-# <directory_in_code> is a directory under the root of the cloned repo
-# where a cached directory is created.
-# <service> is the name of a service which will have the cached directory in its container.
-# <directory_in_service> is the absolute path of the cached directory inside the running service.
-# The `cache` option allows you to share data among deployments (for faster deployments).
-# Before every deployment, each cache directory is mounted under the cloned repo.
-# These directories can then be used during docker build. Once the app is deployed,
-# the cache directories are updated with their latest content from the running
-# containers, which will be used for subsequent deployments.
-cache:
-  - tmp/bundler
-  - node_modules
 ```
+
+#### Note about caching
+
+chatops_deployer creates an empty data only container with default name: `cache`
+when it starts and creates a volume inside this container at default path `/cache`.
+
+You can use this container and volume in your own containers in order to
+persist data between commands or deployments. Here's a sample `docker-compose.yml`
+for a Rails web app service:
+
+```yaml
+web:
+  build: .
+  command: bin/rails s -p 3000 -b '0.0.0.0'
+  ports:
+    - "3000"
+  environment:
+    - BUNDLE_PATH=/cache/tmp/bundler
+  volumes_from:
+    - cache
+  links:
+    - db
+```
+The above will make `/cache` available in the `web` container, so you can
+read/write anything from/to this directory and subdirectories and the changes
+will remain intact.
 
 ### Deployment
 
@@ -212,12 +228,6 @@ be destroyed when the PR is closed.
 If you also want to get a message posted to a callback url, you can set a default
 HTTP endpoint where the status will be updated, in the environment variable:
 DEPLOYER_DEFAULT_POST_URL.
-
-## Development
-
-After checking out the repo, run `bin/setup` to install dependencies. Then, run `rake` to run the tests. You can also run `bin/console` for an interactive prompt that will allow you to experiment.
-
-To install this gem onto your local machine, run `bundle exec rake install`. To release a new version, update the version number in `version.rb`, and then run `bundle exec rake release`, which will create a git tag for the version, push git commits and tags, and push the `.gem` file to [rubygems.org](https://rubygems.org).
 
 ## Contributing
 

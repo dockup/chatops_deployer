@@ -15,6 +15,9 @@ module ChatopsDeployer
       [WORKSPACE, COPY_SOURCE_DIR].each do |dir|
         FileUtils.mkdir_p dir unless Dir.exists?(dir)
       end
+      unless system("docker", "run", "--name", DATA_CONTAINER_NAME, "-v", DATA_CONTAINER_VOLUME, "tianon/true")
+        puts "Cannot create docker data container: #{DATA_CONTAINER_NAME}. Does it already exist?"
+      end
     end
 
 
@@ -53,18 +56,15 @@ module ChatopsDeployer
         repository = payload['repository']['clone_url']
         branch = payload['pull_request']['head']['ref']
 
+        callbacks = [GithubCommentCallback.new(comments_url)]
         case payload['action']
         when 'opened', 'synchronize', 'reopened'
-          callbacks = [GithubCommentCallback.new(comments_url)]
-          callbacks.push(WebhookCallback.new(DEFAULT_POST_URL)) if DEFAULT_POST_URL
           DeployJob.new.async.perform(
             repository: repository,
             branch: branch,
             callbacks: callbacks
           )
         when 'closed'
-          callbacks = []
-          callbacks.push(WebhookCallback.new(DEFAULT_POST_URL)) if DEFAULT_POST_URL
           DestroyJob.new.async.perform(repository: repository, branch: branch, callbacks: callbacks)
         end
       end
