@@ -14,6 +14,7 @@ module ChatopsDeployer
     configure do
       [WORKSPACE, COPY_SOURCE_DIR].each do |dir|
         FileUtils.mkdir_p dir unless Dir.exists?(dir)
+        create_data_container!
       end
     end
 
@@ -70,6 +71,12 @@ module ChatopsDeployer
     def verify_signature(payload_body)
       signature = 'sha1=' + OpenSSL::HMAC.hexdigest(OpenSSL::Digest.new('sha1'), GITHUB_WEBHOOK_SECRET, payload_body)
       return halt 500, "Signatures didn't match!" unless Rack::Utils.secure_compare(signature, request.env['HTTP_X_HUB_SIGNATURE'])
+    end
+
+    def create_data_container!
+      unless system("docker", "run", "--name", DATA_CONTAINER_NAME, "-v", DATA_CONTAINER_VOLUME, "tianon/true")
+        raise "Cannot create docker data container: #{DATA_CONTAINER_NAME}. Does it already exist?"
+      end
     end
   end
 end
