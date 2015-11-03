@@ -16,7 +16,7 @@ module ChatopsDeployer
         FileUtils.mkdir_p dir unless Dir.exists?(dir)
       end
       unless system("docker", "run", "--name", DATA_CONTAINER_NAME, "-v", DATA_CONTAINER_VOLUME, "tianon/true")
-        raise "Cannot create docker data container: #{DATA_CONTAINER_NAME}. Does it already exist?"
+        puts "Cannot create docker data container: #{DATA_CONTAINER_NAME}. Does it already exist?"
       end
     end
 
