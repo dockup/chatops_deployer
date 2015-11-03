@@ -24,10 +24,7 @@ module ChatopsDeployer
     end
 
     def destroy
-      @project.read_config
-      @config = @project.config
       docker_compose_stop
-      docker_compose_delete_volumes
       docker_compose_rm
     end
 
@@ -73,21 +70,9 @@ module ChatopsDeployer
       Command.run(command: ["docker-compose", "-p", @sha1, "stop"], logger: logger)
     end
 
-    def docker_compose_delete_volumes
-      services = @config['purge_volumes']
-      unless services
-        logger.info "None of the services need their volumes purged"
-        return
-      end
-      services.each do |service|
-        logger.info "Removing docker containers and volumes for container #{service}"
-        Command.run(command: ["docker-compose", "-p", @sha1, "rm", "-f", "-v", service], logger: logger)
-      end
-    end
-
     def docker_compose_rm
       logger.info "Removing docker containers for project-name #{@sha1}"
-      Command.run(command: ["docker-compose", "-p", @sha1, "rm", "-f"], logger: logger)
+      Command.run(command: ["docker-compose", "-p", @sha1, "rm", "-f", "-v"], logger: logger)
     end
 
     def get_ip_of_service(service)
