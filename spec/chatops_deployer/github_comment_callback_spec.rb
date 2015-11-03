@@ -3,7 +3,7 @@ require 'webmock/rspec'
 
 describe ChatopsDeployer::GithubCommentCallback do
   let(:endpoint) { 'http://fake-endpoint' }
-  let(:default_post_url) { 'http://default_post_url' }
+  let(:default_post_url) { 'http://default-post-url' }
   let(:callback) { ChatopsDeployer::GithubCommentCallback.new(endpoint) }
   before do
     ChatopsDeployer::GITHUB_OAUTH_TOKEN = 'fake_token'
