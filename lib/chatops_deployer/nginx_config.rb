@@ -110,6 +110,7 @@ module ChatopsDeployer
 
             location / {
                 proxy_pass http://#{ip}:#{port};
+                proxy_set_header Host $host;
             }
         }
       EOM

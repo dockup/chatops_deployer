@@ -103,6 +103,7 @@ describe ChatopsDeployer::NginxConfig do
 
             location / {
                 proxy_pass http://fake_host:3000;
+                proxy_set_header Host $host;
             }
         }
         server{
@@ -115,6 +116,7 @@ describe ChatopsDeployer::NginxConfig do
 
             location / {
                 proxy_pass http://fake_host:3001;
+                proxy_set_header Host $host;
             }
         }
         server{
@@ -127,6 +129,7 @@ describe ChatopsDeployer::NginxConfig do
 
             location / {
                 proxy_pass http://fake_host2:8080;
+                proxy_set_header Host $host;
             }
         }
       EOM
