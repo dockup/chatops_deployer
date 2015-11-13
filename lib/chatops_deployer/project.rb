@@ -13,7 +13,7 @@ module ChatopsDeployer
     class Error < ChatopsDeployer::Error; end
     class ConfigNotFoundError < Error; end
 
-    attr_reader :sha1, :branch_directory, :config
+    attr_reader :sha1, :branch_directory, :config, :org, :repo
     attr_accessor :env
     def initialize(repository, branch, config_file="chatops_deployer.yml")
       @repository = repository
@@ -23,10 +23,10 @@ module ChatopsDeployer
 
       matchdata = @repository.match(/.*github.com\/(.*)\/(.*).git/)
       raise_error("Bad github repository: #{@repository}") if matchdata.nil?
-      org, repo = matchdata.captures
-      @sha1 = Digest::SHA1.hexdigest(org + repo + branch)
-      @branch_directory = File.join(WORKSPACE, org, repo, 'repositories', @branch)
-      @project_directory = File.join(WORKSPACE, org, repo)
+      @org, @repo = matchdata.captures
+      @sha1 = Digest::SHA1.hexdigest(@org + @repo + branch)
+      @branch_directory = File.join(WORKSPACE, @org, @repo, 'repositories', @branch)
+      @project_directory = File.join(WORKSPACE, @org, @repo)
       @common_cache_dir = File.join(@project_directory, 'cache')
     end
 
