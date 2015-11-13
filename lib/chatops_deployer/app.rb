@@ -25,11 +25,13 @@ module ChatopsDeployer
       content_type :json
       json = JSON.parse(request.body.read)
       post_url = json['callback_url']
+      clean = json['clean'] != 'false'
 
       DeployJob.new.async.perform(
         repository: json['repository'],
         branch: json['branch'],
-        callbacks: [WebhookCallback.new(post_url)]
+        callbacks: [WebhookCallback.new(post_url)],
+        clean: clean
       )
       { log_url: LOG_URL }.to_json
     end
