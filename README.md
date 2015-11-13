@@ -176,6 +176,9 @@ like so :
 
 ```
 curl -XPOST  -d '{"repository":"https://github.com/user/app.git","branch":"master","callback_url":"example.com/deployment_status"}' -H "Content-Type: application/json" localhost:8000/deploy
+
+# If code needn't be cleaned and fetched:
+curl -XPOST  -d '{"repository":"https://github.com/user/app.git","branch":"master","callback_url":"example.com/deployment_status","clean":"false"}' -H "Content-Type: application/json" localhost:8000/deploy
 ```
 
 You can see that the request accepts a `callback_url`. chatops_deployer will

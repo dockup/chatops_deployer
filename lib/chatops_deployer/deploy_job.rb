@@ -10,7 +10,7 @@ module ChatopsDeployer
   class DeployJob
     include SuckerPunch::Job
 
-    def perform(repository:, branch: 'master', config_file: 'chatops_deployer.yml', callbacks: [])
+    def perform(repository:, branch: 'master', config_file: 'chatops_deployer.yml', callbacks: [], clean: true)
       @branch = branch
       @project = Project.new(repository, branch, config_file)
       log_file = File.open(LOG_FILE, 'a')
@@ -28,9 +28,13 @@ module ChatopsDeployer
       Dir.chdir(@project.branch_directory) do
         if @project.cloned?
           @container.destroy
-          @project.delete_repo_contents
+          if clean
+            @project.delete_repo_contents
+            @project.fetch_repo
+          end
+        else
+          @project.fetch_repo
         end
-        @project.fetch_repo
         @project.read_config
         @nginx_config.prepare_urls
         @project.copy_files_from_deployer
