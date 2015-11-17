@@ -1,6 +1,7 @@
 # ChatopsDeployer
 
-A lightweight Sinatra app that deploys staging apps of git branches in docker containers.
+A lightweight Sinatra app that deploys staging apps from Github repository branches
+using docker and friends.
 
 Automatically when you submit pull requests:
 ![github-webhook](https://s3-ap-southeast-1.amazonaws.com/uploads-ap.hipchat.com/39906/538857/k7WU2wiVbLzQMu6/upload.png "Github Webhook")
@@ -10,7 +11,7 @@ Or whenever you feel like:
 
 Features:
 
-* Disposable environments using docker and friends
+* Disposable environments using docker-compose
 * Simple API to deploy apps in github repos
 * Hubot ready
 * Works with Github webhooks
@@ -19,8 +20,7 @@ Features:
 
 ## Requirements
 
-**All commands need to be run as the root user**
-So it's best if you can run this on a dedicated disposable server.
+Install the following on a dedicated server with root access.
 
 1. docker-compose - For running multi-container apps
 2. nginx - For setting up a subdomain for each deployment
@@ -38,7 +38,7 @@ TODO: setup script to install requirements on Ubuntu 14.04
         Host github.com
           StrictHostKeyChecking no
 
-3. Create an ssh key-pair and add it to your github user:    
+3. Create an ssh key-pair and add it to your github user:
 
         ssh-keygen
         # Copy ~/.ssh/id_rsa.pub and add it to keys of the github account
@@ -239,5 +239,5 @@ Bug reports and pull requests are welcome on GitHub at https://github.com/code-m
 
 ## License
 
-The gem is available as open source under the terms of the [MIT License](http://opensource.org/licenses/MIT).
+[MIT License](http://opensource.org/licenses/MIT).
 
