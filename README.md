@@ -49,6 +49,17 @@ which you can see in your browser. `npm install -g frontail` and `frontail /var/
 
 5. `docker login` (if pulling private docker images)
 
+6. Cron job to cleanup unused docker containers and images
+
+Install `docker-gc` and set up an hourly cron job to cleanup unused containers
+and images. Follow instructions [here](https://github.com/spotify/docker-gc).
+To prevent the cache container from getting GC'd, add an exclusion rule to prevent
+GC of the container named `cache`.
+
+```
+echo cache > /etc/docker-gc-exclude-containers
+```
+
 ## Usage
 
 Set the following ENV vars:
