@@ -1,0 +1,21 @@
+#!/usr/bin/env ruby
+
+ENV['DEPLOYER_HOST'] = '<ip>.xip.io'
+ENV['GITHUB_WEBHOOK_SECRET'] = ''
+ENV['GITHUB_OAUTH_TOKEN'] = ''
+
+# Optional
+ENV['DEPLOYER_LOG_URL'] = 'http://<ip>.xip.io:9001'
+ENV['VAULT_ADDR'] = 'https://localhost:8200'
+ENV['VAULT_CACERT'] = '/root/vault/certs/domain.crt'
+ENV['VAULT_TOKEN'] = 'your token here'
+ENV['DEPLOYER_DEFAULT_POST_URL']= 'http://<hubot_url>/chatops/callback/<room>'
+
+begin
+  require 'chatops_deployer/app.rb'
+rescue LoadError => e
+  require 'rubygems'
+  path = File.expand_path '../../lib', __FILE__
+  $:.unshift(path) if File.directory?(path) && !$:.include?(path)
+  require 'chatops_deployer/app.rb'
+end

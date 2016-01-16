@@ -11,7 +11,7 @@ module ChatopsDeployer
     end
 
     def deployment_success(branch, urls)
-      WebhookCallback.new(DEFAULT_POST_URL).deployment_success(branch, urls)
+      WebhookCallback.new(DEFAULT_POST_URL).deployment_success(branch, urls) if DEFAULT_POST_URL
 
       links = urls.collect do |service, urls|
         urls.collect do |port, url|
@@ -28,7 +28,7 @@ module ChatopsDeployer
     def deployment_failure(branch, error)
       return if error.is_a? Project::ConfigNotFoundError
 
-      WebhookCallback.new(DEFAULT_POST_URL).deployment_failure(branch, error)
+      WebhookCallback.new(DEFAULT_POST_URL).deployment_failure(branch, error) if DEFAULT_POST_URL
       body = "Could not deploy branch: #{branch}. Reason: #{error.message}."
       HTTParty.post(@comments_url, body: {body: body}.to_json, headers: {
         'Authorization' => "token #{GITHUB_OAUTH_TOKEN}",
