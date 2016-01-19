@@ -29,6 +29,8 @@ describe ChatopsDeployer::DeployJob do
           .and_return container
         expect(project).to receive(:logger=)
         expect(project).to receive(:sha1).and_return 'fake_sha1'
+        expect(project).to receive(:org)
+        expect(project).to receive(:repo)
         expect(project).to receive(:cloned?).and_return false
         expect(project).to receive(:setup_directory)
         expect(project).to receive(:fetch_repo)
@@ -66,6 +68,8 @@ describe ChatopsDeployer::DeployJob do
             .and_return container
           expect(project).to receive(:logger=)
           expect(project).to receive(:sha1).and_return 'fake_sha1'
+          expect(project).to receive(:org)
+          expect(project).to receive(:repo)
           expect(project).to receive(:setup_directory)
           expect(project).to receive(:fetch_repo)
           expect(project).to receive(:read_config)
@@ -101,6 +105,8 @@ describe ChatopsDeployer::DeployJob do
             .and_return container
           expect(project).to receive(:logger=)
           expect(project).to receive(:sha1).and_return 'fake_sha1'
+          expect(project).to receive(:org)
+          expect(project).to receive(:repo)
           expect(project).to receive(:setup_directory)
           expect(project).to receive(:read_config)
           expect(project).to receive(:copy_files_from_deployer)
@@ -133,6 +139,8 @@ describe ChatopsDeployer::DeployJob do
         expect(ChatopsDeployer::Project).to receive(:new).with(repo, branch, 'chatops_deployer.yml')
           .and_return project
         expect(project).to receive(:sha1).at_least(:once).and_return 'fake_sha1'
+        expect(project).to receive(:org)
+        expect(project).to receive(:repo)
         fake_error = ChatopsDeployer::Error.new('failed!')
         expect(ChatopsDeployer::NginxConfig).to receive(:new).and_raise fake_error
 

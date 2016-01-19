@@ -15,7 +15,7 @@ module ChatopsDeployer
       @project = Project.new(repository, branch, config_file)
       log_file = File.open(LOG_FILE, 'a')
       @logger = ::Logger.new(MultiIO.new($stdout, log_file)).tap do |l|
-        l.progname = @project.sha1
+        l.progname = "#{@project.sha1} (#{@project.org}/#{@project.repo}:#{branch})"
       end
 
       @nginx_config = NginxConfig.new(@project)
