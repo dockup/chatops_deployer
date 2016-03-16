@@ -11,45 +11,44 @@ module ChatopsDeployer
     include SuckerPunch::Job
 
     def perform(repository:, branch: 'master', config_file: 'chatops_deployer.yml', callbacks: [], clean: true)
-      @branch = branch
-      @project = Project.new(repository, branch, config_file)
+      project = Project.new(repository, branch, config_file)
       log_file = File.open(LOG_FILE, 'a')
-      @logger = ::Logger.new(MultiIO.new($stdout, log_file)).tap do |l|
-        l.progname = @project.sha1
+      logger = ::Logger.new(MultiIO.new($stdout, log_file)).tap do |l|
+        l.progname = project.sha1
       end
 
-      @nginx_config = NginxConfig.new(@project)
-      @container = Container.new(@project)
-      [@project, @nginx_config, @container].each do |obj|
-        obj.logger = @logger
+      nginx_config = NginxConfig.new(project)
+      container = Container.new(project)
+      [project, nginx_config, container].each do |obj|
+        obj.logger = logger
       end
 
-      @project.setup_directory
-      Dir.chdir(@project.branch_directory) do
-        if @project.cloned?
-          @container.destroy
+      project.setup_directory
+      Dir.chdir(project.branch_directory) do
+        if project.cloned?
+          container.destroy
           if clean
-            @project.delete_repo_contents
-            @project.fetch_repo
+            project.delete_repo_contents
+            project.fetch_repo
           end
         else
-          @project.fetch_repo
+          project.fetch_repo
         end
-        @project.read_config
-        @nginx_config.prepare_urls
-        @project.copy_files_from_deployer
-        @project.setup_cache_directories
-        @container.build
-        @project.update_cache
+        project.read_config
+        nginx_config.prepare_urls
+        project.copy_files_from_deployer
+        project.setup_cache_directories
+        container.build
+        project.update_cache
       end
-      @nginx_config.add_urls(@container.urls)
+      nginx_config.add_urls(container.urls)
 
-      @logger.info "Succesfully deployed #{@branch}"
-      callbacks.each{|c| c.deployment_success(@branch, @nginx_config.exposed_urls)}
+      logger.info "Succesfully deployed #{branch}"
+      callbacks.each{|c| c.deployment_success(branch, nginx_config.exposed_urls)}
     rescue ChatopsDeployer::Error => e
       reason = e.message
-      @logger.info "Failed deploying #{@branch}. Reason: #{reason}"
-      callbacks.each{|c| c.deployment_failure(@branch, e)}
+      logger.info "Failed deploying #{branch}. Reason: #{reason}"
+      callbacks.each{|c| c.deployment_failure(branch, e)}
     end
   end
 end
