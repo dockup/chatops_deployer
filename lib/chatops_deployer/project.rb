@@ -21,7 +21,7 @@ module ChatopsDeployer
       @config_file = config_file
       @env = {}
 
-      matchdata = @repository.match(/.*github.com\/(.*)\/(.*).git/)
+      matchdata = @repository.match(/.*[:\/](.*)\/(.*).git/)
       raise_error("Bad github repository: #{@repository}") if matchdata.nil?
       org, repo = matchdata.captures
       @sha1 = Digest::SHA1.hexdigest(org + repo + branch)
