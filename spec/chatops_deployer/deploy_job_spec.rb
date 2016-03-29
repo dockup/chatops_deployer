@@ -19,9 +19,10 @@ describe ChatopsDeployer::DeployJob do
       let(:repo) { 'fake_repo' }
       let(:branch) { 'branch' }
       let(:callback_url) { 'http://example.com/callback' }
+      let(:host) { 'http://fake_host.example.com/' }
 
       it 'should deploy the branch and trigger callback' do
-        expect(ChatopsDeployer::Project).to receive(:new).with(repo, branch, 'chatops_deployer.yml')
+        expect(ChatopsDeployer::Project).to receive(:new).with(repo, branch, host, 'chatops_deployer.yml')
           .and_return project
         expect(ChatopsDeployer::NginxConfig).to receive(:new).with(project)
           .and_return nginx_config
@@ -49,7 +50,7 @@ describe ChatopsDeployer::DeployJob do
 
         fake_callback = double
         expect(fake_callback).to receive(:deployment_success).with("branch", exposed_urls)
-        deploy_job.perform(repository: repo, branch: branch, callbacks: [fake_callback])
+        deploy_job.perform(repository: repo, branch: branch, host: host, callbacks: [fake_callback])
       end
 
       context 'when project is already cloned' do
@@ -58,7 +59,7 @@ describe ChatopsDeployer::DeployJob do
           expect(container).to receive(:destroy)
           expect(project).to receive(:delete_repo_contents)
 
-          expect(ChatopsDeployer::Project).to receive(:new).with(repo, branch, 'chatops_deployer.yml')
+          expect(ChatopsDeployer::Project).to receive(:new).with(repo, branch, host, 'chatops_deployer.yml')
             .and_return project
           expect(ChatopsDeployer::NginxConfig).to receive(:new).with(project)
             .and_return nginx_config
@@ -85,7 +86,7 @@ describe ChatopsDeployer::DeployJob do
 
           fake_callback = double
           expect(fake_callback).to receive(:deployment_success).with("branch", exposed_urls)
-          deploy_job.perform(repository: repo, branch: branch, callbacks: [fake_callback])
+          deploy_job.perform(repository: repo, branch: branch, host: host, callbacks: [fake_callback])
         end
 
         it 'keeps the directory and does not clone again when "clean" is false' do
@@ -93,7 +94,7 @@ describe ChatopsDeployer::DeployJob do
           expect(project).not_to receive(:delete_repo_contents)
           expect(project).not_to receive(:fetch_repo)
 
-          expect(ChatopsDeployer::Project).to receive(:new).with(repo, branch, 'chatops_deployer.yml')
+          expect(ChatopsDeployer::Project).to receive(:new).with(repo, branch, host, 'chatops_deployer.yml')
             .and_return project
           expect(ChatopsDeployer::NginxConfig).to receive(:new).with(project)
             .and_return nginx_config
@@ -119,7 +120,7 @@ describe ChatopsDeployer::DeployJob do
 
           fake_callback = double
           expect(fake_callback).to receive(:deployment_success).with("branch", exposed_urls)
-          deploy_job.perform(repository: repo, branch: branch, callbacks: [fake_callback], clean: false)
+          deploy_job.perform(repository: repo, branch: branch, host: host, callbacks: [fake_callback], clean: false)
         end
       end
     end
@@ -128,9 +129,10 @@ describe ChatopsDeployer::DeployJob do
       let(:repo) { 'fake_repo' }
       let(:branch) { 'branch' }
       let(:callback_url) { 'http://example.com/callback' }
+      let(:host) { 'http://fake_host.example.com/' }
 
       it 'trigger callback with failure status and reason' do
-        expect(ChatopsDeployer::Project).to receive(:new).with(repo, branch, 'chatops_deployer.yml')
+        expect(ChatopsDeployer::Project).to receive(:new).with(repo, branch, host, 'chatops_deployer.yml')
           .and_return project
         expect(project).to receive(:sha1).at_least(:once).and_return 'fake_sha1'
         fake_error = ChatopsDeployer::Error.new('failed!')
@@ -139,7 +141,7 @@ describe ChatopsDeployer::DeployJob do
         fake_callback = double
         expect(fake_callback).to receive(:deployment_failure)
           .with("branch", fake_error)
-        deploy_job.perform(repository: repo, branch: branch, callbacks: [fake_callback])
+        deploy_job.perform(repository: repo, branch: branch, host: host, callbacks: [fake_callback])
       end
     end
   end

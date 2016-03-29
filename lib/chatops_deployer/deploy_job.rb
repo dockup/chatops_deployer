@@ -10,8 +10,8 @@ module ChatopsDeployer
   class DeployJob
     include SuckerPunch::Job
 
-    def perform(repository:, branch: 'master', config_file: 'chatops_deployer.yml', callbacks: [], clean: true)
-      project = Project.new(repository, branch, config_file)
+    def perform(repository:, branch: 'master', host: 'github.com' , config_file: 'chatops_deployer.yml', callbacks: [], clean: true)
+      @project = Project.new(repository, branch, host, config_file)
       log_file = File.open(LOG_FILE, 'a')
       logger = ::Logger.new(MultiIO.new($stdout, log_file)).tap do |l|
         l.progname = project.sha1

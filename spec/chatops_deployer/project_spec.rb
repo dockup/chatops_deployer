@@ -2,7 +2,7 @@ require 'chatops_deployer/project'
 
 describe ChatopsDeployer::Project do
   let(:repo) { 'https://github.com/code-mancers/app.git' }
-  let(:project) { ChatopsDeployer::Project.new(repo, 'branch') }
+  let(:project) { ChatopsDeployer::Project.new(repo, 'branch', 'github.com') }
   before { project.setup_directory }
 
   describe "setup_directory" do

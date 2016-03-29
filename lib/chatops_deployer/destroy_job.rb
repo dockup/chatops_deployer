@@ -10,9 +10,9 @@ module ChatopsDeployer
   class DestroyJob
     include SuckerPunch::Job
 
-    def perform(repository:, branch:, callbacks:[])
+    def perform(repository:, branch:, host:, callbacks:[])
       @branch = branch
-      @project = Project.new(repository, branch)
+      @project = Project.new(repository, branch, host)
       log_file = File.open(LOG_FILE, 'a')
       @logger = ::Logger.new(MultiIO.new($stdout, log_file)).tap do |l|
         l.progname = @project.sha1
