@@ -3,7 +3,7 @@ require 'fileutils'
 require 'webmock/rspec'
 
 describe ChatopsDeployer::DestroyJob do
-  let(:deploy_job) { ChatopsDeployer::DestroyJob.new }
+  let(:destroy_job) { ChatopsDeployer::DestroyJob.new }
 
   before do
     FileUtils.mkdir_p '/etc/nginx/sites-available'
@@ -19,9 +19,10 @@ describe ChatopsDeployer::DestroyJob do
       let(:repo) { 'fake_repo' }
       let(:branch) { 'branch' }
       let(:callback_url) { 'http://example.com/callback' }
+      let(:host) { 'http://fake_host.example.com' }
 
       it 'should deploy the branch and trigger callback' do
-        expect(ChatopsDeployer::Project).to receive(:new).with(repo, branch)
+        expect(ChatopsDeployer::Project).to receive(:new).with(repo, branch, host)
           .and_return project
         expect(ChatopsDeployer::NginxConfig).to receive(:new).with(project)
           .and_return nginx_config
@@ -40,7 +41,7 @@ describe ChatopsDeployer::DestroyJob do
         fake_callback = double
         expect(fake_callback).to receive(:destroy_success)
           .with("branch")
-        deploy_job.perform(repository: repo, branch: branch, callbacks: [fake_callback])
+        destroy_job.perform(repository: repo, branch: branch, host: host, callbacks: [fake_callback])
       end
     end
   end

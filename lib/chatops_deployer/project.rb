@@ -15,14 +15,15 @@ module ChatopsDeployer
 
     attr_reader :sha1, :branch_directory, :config
     attr_accessor :env
-    def initialize(repository, branch, config_file="chatops_deployer.yml")
+    def initialize(repository, branch, host, config_file="chatops_deployer.yml")
       @repository = repository
       @branch = branch
       @config_file = config_file
       @env = {}
 
-      matchdata = @repository.match(/.*github.com\/(.*)\/(.*).git/)
-      raise_error("Bad github repository: #{@repository}") if matchdata.nil?
+      regex = Regexp.new(".*#{host}\/(.*)\/(.*).git")
+      matchdata = @repository.match(regex)
+      raise_error("Bad repository: #{@repository}") if matchdata.nil?
       org, repo = matchdata.captures
       @sha1 = Digest::SHA1.hexdigest(org + repo + branch)
       @branch_directory = File.join(WORKSPACE, org, repo, 'repositories', @branch)

@@ -26,10 +26,12 @@ module ChatopsDeployer
       json = JSON.parse(request.body.read)
       post_url = json['callback_url']
       clean = json['clean'] != 'false'
+      host = json['host'] || 'github.com'
 
       DeployJob.new.async.perform(
         repository: json['repository'],
         branch: json['branch'],
+        host: host,
         callbacks: [WebhookCallback.new(post_url)],
         clean: clean
       )
@@ -40,10 +42,12 @@ module ChatopsDeployer
       content_type :json
       json = JSON.parse(request.body.read)
       post_url = json['callback_url']
+      host = json['host'] != 'github.com'
 
       DestroyJob.new.async.perform(
         repository: json['repository'],
         branch: json['branch'],
+        host: host,
         callbacks: [WebhookCallback.new(post_url)]
       )
     end
