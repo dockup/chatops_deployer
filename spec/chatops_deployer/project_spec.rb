@@ -5,6 +5,20 @@ describe ChatopsDeployer::Project do
   let(:project) { ChatopsDeployer::Project.new(repo, 'branch') }
   before { project.setup_directory }
 
+  describe "parse git url" do
+    context 'when github repo is passed' do
+      it 'does not throw any error if git url is valid' do
+        expect{ project }.not_to raise_error
+      end
+    end
+    context 'when any other git url is passed is passed' do
+      subject(:project) { ChatopsDeployer::Project.new('https://example.com/organization/repo.git', 'branch') }
+      it 'does not throw any error if git url is valid' do
+        expect{ project }.not_to raise_error
+      end
+    end
+  end
+
   describe "setup_directory" do
     it 'creates the project and branch directories' do
       branch_dir = File.join(ChatopsDeployer::WORKSPACE, 'code-mancers/app/repositories/branch')
