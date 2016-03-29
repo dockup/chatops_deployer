@@ -26,7 +26,7 @@ module ChatopsDeployer
       json = JSON.parse(request.body.read)
       post_url = json['callback_url']
       clean = json['clean'] != 'false'
-      host = json['host'] ||= 'github.com'
+      host = json['host'] || 'github.com'
 
       DeployJob.new.async.perform(
         repository: json['repository'],
