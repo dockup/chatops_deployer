@@ -72,6 +72,31 @@ module ChatopsDeployer
       end
     end
 
+    post '/gitlab-webhook' do
+      payload_body = request.body.read
+      payload = JSON.parse(payload_body)
+
+      if payload['object_kind'] == 'merge_request'
+        repository = payload['object_attributes']['source']['git_http_url']
+        branch = payload['object_attributes']['source_branch']
+        matchdata = repository.match(/(.*)[:\/](.*)\/(.*).git/)
+        return halt 500, "Invalid git url" if matchdata.nil?
+        comments_url = "#{matchdata[1]}/#{payload['object_attributes']['source_project_id']}/merge_requests/#{payload['object_attributes']['id']}/notes"
+
+        callbacks = [GitlabCommentCallback.new(comments_url)]
+        case payload['object_attributes']['state']
+        when 'opened', 'merged'
+          DeployJob.new.async.perform(
+            repository: repository,
+            branch: branch,
+            callbacks: callbacks
+          )
+        when 'closed'
+          DestroyJob.new.async.perform(repository: repository, branch: branch, callbacks: callbacks)
+        end
+      end
+    end
+
     def verify_signature(payload_body)
       signature = 'sha1=' + OpenSSL::HMAC.hexdigest(OpenSSL::Digest.new('sha1'), GITHUB_WEBHOOK_SECRET, payload_body)
       return halt 500, "Signatures didn't match!" unless Rack::Utils.secure_compare(signature, request.env['HTTP_X_HUB_SIGNATURE'])
